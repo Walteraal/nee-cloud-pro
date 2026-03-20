@@ -1,0 +1,2650 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NEE Cloud Pro - v145.0 Reactiva</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/script.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <style>
+    /* 1. VARIABLES Y RESET PROFESIONAL */
+    :root { 
+        --p: #1a252f;    /* Primary: Navy */
+        --s: #27ae60;    /* Success: Green */
+        --a: #2980b9;    /* Action: Blue */
+        --d: #c0392b;    /* Danger: Red */
+        --w: #f39c12;    /* Warning: Orange */
+        --g: #7f8c8d;    /* Gray */
+        --bg: #f4f7f6;   /* Background */
+        --shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    
+    * { box-sizing: border-box; transition: all 0.2s ease; }
+
+    body { 
+        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
+        background: var(--bg); 
+        margin: 0; 
+        padding: 10px; 
+        line-height: 1.5;
+        color: #333;
+    }
+
+    /* 3. CONTENEDORES PRINCIPALES */
+    .container { 
+        background: white; 
+        padding: 25px; 
+        border-radius: 20px; 
+        max-width: 1200px; 
+        margin: auto; 
+        box-shadow: var(--shadow); 
+    }
+
+    .card {
+        background: #fff;
+        border-radius: 16px;
+        padding: 20px;
+        border: 1px solid rgba(0,0,0,0.05);
+        margin-bottom: 20px;
+    }
+
+    /* 4. NAVEGACIÓN */
+    .nav { 
+        background: var(--p); 
+        color: white; 
+        padding: 15px 25px; 
+        border-radius: 15px; 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; 
+        margin-bottom: 25px; 
+        gap: 15px;
+    }
+
+    /* 5. BOTONES REFINADOS */
+    .btn { 
+        padding: 12px 20px; 
+        border: none; 
+        border-radius: 10px; 
+        cursor: pointer; 
+        color: white; 
+        font-weight: 600; 
+        display: inline-flex; 
+        align-items: center; 
+        justify-content: center;
+        gap: 8px; 
+        font-size: 0.9rem; 
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.15); }
+    .btn:active { transform: translateY(0); }
+    .btn:disabled { background: #bdc3c7 !important; cursor: not-allowed; transform: none; }
+
+    .btn-icon {
+        background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 5px; border-radius: 5px;
+    }
+    .btn-icon:hover { background: rgba(0,0,0,0.05); }
+
+    /* 6. DASHBOARD (STAT CARDS) */
+    .stat-grid { 
+        display: grid; 
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); 
+        gap: 20px; 
+        margin-bottom: 25px; 
+    }
+    .stat-card { 
+        padding: 20px; 
+        border-radius: 18px; 
+        color: white; 
+        position: relative;
+        overflow: hidden;
+    }
+    .stat-card h2 { font-size: 2.5rem; margin: 0; font-weight: 800; }
+    .stat-card p { margin: 0; opacity: 0.9; font-weight: 500; text-transform: uppercase; font-size: 0.75rem; }
+
+    /* 7. TABLAS Y DATOS */
+    .table-responsive { overflow-x: auto; border-radius: 12px; background: white; }
+    table { width: 100%; border-collapse: collapse; }
+    th { background: #f8f9fa; padding: 15px; text-align: left; color: var(--g); font-size: 0.85rem; }
+    td { padding: 15px; border-bottom: 1px solid #f1f1f1; font-size: 0.95rem; }
+
+    /* 8. MODAL DE EVALUACIÓN Y EDICIÓN */
+    .modal { 
+        display: none; position: fixed; z-index: 10000 !important; 
+        left: 0; top: 0; width: 100%; height: 100%; 
+        background: rgba(26, 37, 47, 0.8); backdrop-filter: blur(8px);
+        overflow-y: auto; align-items: center; justify-content: center;
+    }
+    .modal-content { 
+        background: white; margin: 2% auto; 
+        width: 95%; max-width: 650px; border-radius: 24px; 
+        box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+        animation: modalIn 0.3s ease-out;
+        position: relative;
+    }
+
+    /* 9. ELEMENTOS DEL TEST (CHECK-CARDS) */
+    .test-step { display: none; padding: 10px 5px; }
+    .test-step.active { display: block; animation: fadeIn 0.3s; }
+
+    .dim-badge {
+        display: inline-block; padding: 6px 14px; border-radius: 30px;
+        font-size: 0.7rem; font-weight: 800; text-transform: uppercase; margin-bottom: 15px;
+    }
+
+    .check-card {
+        display: flex; align-items: center; background: #fff;
+        padding: 15px; border-radius: 12px; margin-bottom: 10px;
+        cursor: pointer; border: 2px solid #f0f0f0;
+    }
+    .check-card:hover { border-color: var(--a); background: #f0f7ff; }
+    .check-card input[type="checkbox"] { width: 20px; height: 20px; margin-right: 15px; cursor: pointer; }
+
+    .progress-bar { height: 10px; background: #eee; border-radius: 10px; margin: 20px 0; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, var(--s), #2ecc71); transition: 0.5s; }
+
+    /* 10. FORMULARIOS */
+    input, select, textarea { 
+        padding: 12px 15px; border-radius: 10px; border: 2px solid #eee; 
+        width: 100%; margin-bottom: 15px; font-size: 0.95rem; outline: none;
+    }
+    input:focus, select:focus { border-color: var(--a); background: #fff; }
+
+    /* 11. RADAR Y GRÁFICAS */
+    .chart-container { position: relative; height: 300px; width: 100%; margin: 20px 0; }
+
+    /* 12. ANIMACIONES Y MEDIA QUERIES */
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes modalIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+    @media screen and (max-width: 600px) {
+        .nav { flex-direction: column; padding: 20px; }
+        .stat-grid { grid-template-columns: 1fr; }
+        .btn { width: 100%; }
+        .modal-content { width: 98%; margin: 1% auto; border-radius: 15px; }
+        td:nth-child(4) { display: none; } 
+    }
+
+    /* 13. CORRECCIÓN DE VISIBILIDAD CRÍTICA (Versión Estructural) */
+
+    /* 1. Reset de Secciones: Oculto por defecto */
+    .seccion-vista {
+        display: none !important;
+        width: 100%;
+        opacity: 0;
+        visibility: hidden;
+    }
+
+    /* 2. Activación: Solo la que tiene la clase .activa se muestra */
+    .seccion-vista.activa {
+        display: block !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        animation: fadeIn 0.4s ease-out;
+        min-height: 200px;
+    }
+
+    /* 3. Contenedor Principal */
+    #mainSection {
+        display: none; 
+    }
+
+    #mainSection.activa {
+        display: flex !important;
+        flex-direction: column;
+        min-height: 100vh;
+    }
+
+    /* 4. Tablas y Contenedores (Solo afectan cuando el padre está activo) */
+    .table-responsive {
+        width: 100% !important;
+        overflow-x: auto !important;
+        display: block !important;
+    }
+
+    table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        display: table !important;
+        background: white !important;
+    }
+
+    #listaSugerencias td {
+        color: #000000 !important;
+        padding: 15px !important;
+        border-bottom: 1px solid #eee !important;
+    }
+
+    /* 5. Badges */
+    .badge {
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: bold;
+        color: white !important;
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        min-width: 80px;
+    }
+
+    /* 6. Eliminación de bloqueos de visibilidad globales */
+    /* IMPORTANTE: He eliminado el bloque final que forzaba 
+       #vistaSugerencias a ser block siempre. Eso era lo que 
+       hacía que saliera debajo de todo. 
+    */
+
+    #loginSection.oculto, .oculto {
+        display: none !important;
+    }
+
+    /* Asegura que el canvas tenga espacio para dibujarse */
+    .chart-container {
+        position: relative;
+        height: 300px; /* Obligatorio: Chart.js necesita una altura fija o relativa */
+        width: 100%;
+        margin-bottom: 20px;
+    }
+
+    canvas {
+        display: block;
+        max-width: 100%;
+    }
+
+    .card canvas {
+        width: 100% !important;
+        height: 100% !important;
+    }
+
+    .imgEscudo {
+        background-color: white; /* Por si el logo es transparente */
+        padding: 5px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Sombra suave */
+        border: 1px solid #ddd;
+    }
+
+</style>
+</head>
+<body>
+
+<div id="loginSection" class="seccion-vista activa container" style="max-width: 400px; margin-top: 50px;">
+    <h2 style="text-align:center;">NEE Cloud Pro</h2>
+    <div id="loginBox">
+        <input type="text" id="lCod" placeholder="Código DANE">
+        <input type="password" id="lPass" placeholder="Contraseña">
+        <button class="btn" style="background:var(--s); width:100%; justify-content:center;" onclick="ingresar()">INGRESAR</button>
+        <button class="btn" style="color:var(--a); background:none; margin-top:10px; width:100%;" onclick="toggleReg(true)">+ Crear Institución</button>
+    </div>
+    <div id="regBox" style="display:none;">
+        <input type="text" id="rNom" placeholder="Nombre Colegio">
+        <input type="text" id="rCod" placeholder="Código DANE">
+        <input type="password" id="rPass" placeholder="Contraseña">
+        <button class="btn" style="background:var(--a); width:100%;" onclick="registrarSede()">REGISTRAR</button>
+        <button class="btn" style="background:var(--g); margin-top:10px; width:100%;" onclick="toggleReg(false)">VOLVER</button>
+    </div>
+</div>
+
+<div id="mainSection" class="container" style="display: none;">
+    
+    <div class="nav" style="display: flex; align-items: center; justify-content: space-between; padding: 15px; background: white; border-bottom: 2px solid #eee; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <img src="" class="imgEscudo" alt="Logo" style="width: 50px; height: 50px; object-fit: contain; display: none; border-radius: 4px;">
+            <div>
+                <b id="dispName" style="color: var(--p); font-size: 1.1rem; display: block; line-height: 1;"></b>
+                <small id="dispDane" style="color: #666;"></small>
+            </div>
+        </div>
+        <div style="display:flex; gap:10px; flex-wrap: wrap;">
+            <button class="btn nav-link" id="btn-dash" style="background:var(--a)" onclick="navegar('dash')">📊 Dashboard</button>
+            <button class="btn nav-link" id="btn-list" style="background:var(--a)" onclick="navegar('list')">📋 Estudiantes</button>
+            <button class="btn nav-link" id="btn-vistaSugerencias" style="background:var(--p)" onclick="navegar('vistaSugerencias')">⚙️ Sugerencias</button>
+            <button class="btn" style="background:var(--d); color: white; border: none;" onclick="confirmarSalida()">Log out</button>
+        </div>
+    </div>
+
+    <div id="dash" class="seccion-vista">
+        <div style="display:flex; gap:10px; margin-bottom:20px; background:#f8f9fa; padding:15px; border-radius:12px; flex-wrap: wrap;">
+            <select id="fGra" onchange="render()" style="width: auto; flex: 1; min-width: 120px;"><option value="ALL">Grado: Todos</option></select>
+            <select id="fSec" onchange="render()" style="width: auto; flex: 1; min-width: 120px;"><option value="ALL">Sección: Todas</option></select>
+            <select id="fRie" onchange="render()" style="width: auto; flex: 1; min-width: 120px;">
+                <option value="ALL">Riesgo: Todos</option>
+                <option value="ALTO">Alto</option>
+                <option value="MEDIO">Medio</option>
+                <option value="BAJO">Bajo</option>
+            </select>
+            <button class="btn" style="background:#e74c3c; color:white;" onclick="exportarPDF(event)"> 📥 PDF</button>
+        </div>
+        
+        <div id="pdfAreaDash">
+            <div class="stat-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+                <div class="stat-card" style="background:#2c3e50; color:white; padding:15px; border-radius:10px;">POBLACIÓN <h2 id="vT" style="margin:5px 0;">0</h2></div>
+                <div class="stat-card" style="background:var(--d); color:white; padding:15px; border-radius:10px;">ALTO <h2 id="vA" style="margin:5px 0;">0</h2><div id="dA" class="det-box"></div></div>
+                <div class="stat-card" style="background:var(--w); color:white; padding:15px; border-radius:10px;">MEDIO <h2 id="vM" style="margin:5px 0;">0</h2><div id="dM" class="det-box"></div></div>
+                <div class="stat-card" style="background:var(--s); color:white; padding:15px; border-radius:10px;">BAJO <h2 id="vB" style="margin:5px 0;">0</h2><div id="dB" class="det-box"></div></div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 25px;">
+                <div class="card" style="position: relative; height: 350px; padding:15px;"><canvas id="chartP"></canvas></div>
+                <div class="card" style="position: relative; height: 350px; padding:15px;"><canvas id="chartB"></canvas></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="list" class="seccion-vista" style="display:none;">
+        <div style="display:flex; justify-content:space-between; margin-bottom:15px; gap:10px; flex-wrap: wrap;">
+            <input type="text" id="bus" placeholder="Buscar por nombre o documento..." onkeyup="search()" style="max-width:300px; margin:0; padding:10px; border:1px solid #ddd; border-radius:8px;">
+            <div style="display:flex; gap:8px;">
+                <button class="btn" style="background:var(--s)" onclick="openM()">+ NUEVO</button>
+                <button class="btn" style="background:var(--a)" onclick="exportXLS()">📗 EXCEL</button>
+                <label class="btn" style="background:var(--w); cursor:pointer;">📂 IMPORTAR <input type="file" style="display:none" onchange="importarCSV(this)"></label>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table style="width:100%; border-collapse: collapse;">
+                <thead><tr style="background:#f4f4f4; border-bottom: 2px solid #ddd;"><th>Riesgo</th><th>Documento</th><th>Nombre</th><th>Grado/Sec</th><th>Acciones</th></tr></thead>
+                <tbody id="tBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="perfil" class="seccion-vista" style="display:none;">
+        <div style="display:flex; justify-content:space-between; margin-bottom:15px; flex-wrap: wrap; gap: 10px;">
+            <button class="btn" style="background:var(--g)" onclick="navegar('list')">⬅ Volver</button>
+            <div style="display:flex; gap:10px;">
+                <button id="btnActa" class="btn" style="background:#2c3e50; color:white; display:none;" onclick="generarActaCompromiso()">
+                    📜 Acta de Compromiso
+                </button>
+                <button class="btn" style="background:var(--w)" onclick="reHacerTest()">📝 Re-evaluar</button>
+                <button class="btn" style="background:var(--d)" onclick="pdfFichaIndividual()">📥 PDF</button>
+            </div>
+        </div>
+
+        <div id="pdfAreaFicha" class="card" style="padding:30px; background: white;">
+            
+            <div style="display: flex; align-items: center; gap: 20px; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 20px;">
+                <img id="imgEscudoPerfil" src="" style="width: 70px; height: 70px; object-fit: contain; display: none;">
+                <div>
+                    <h2 id="pNom" style="margin:0; color:var(--p); font-size: 1.8rem;"></h2>
+                    <p id="pInfo" style="margin:5px 0 0; font-size:1.1rem; color:var(--g);"></p>
+                </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap:30px;">
+                
+                <div>
+                    <div id="pSugerencias" style="margin-bottom:25px; min-height: 50px;"></div>
+
+                    <h3 style="color:var(--p); margin-bottom:10px; border-left: 4px solid var(--s); padding-left: 10px;">📝 Bitácora de Seguimiento</h3>
+                    <div style="background: #f9f9f9; padding: 15px; border-radius: 10px;">
+                        <textarea id="bitIn" placeholder="Escriba aquí la nueva observación técnica o pedagógica..." 
+                            style="width:100%; min-height:80px; padding:10px; border-radius:8px; border:1px solid #ddd; resize: vertical;"></textarea>
+                        <button class="btn" style="background:var(--s); width:100%; justify-content:center; margin-top:10px;" onclick="addBit()">
+                            💾 GUARDAR EN BITÁCORA
+                        </button>
+                        <div id="bitLis" style="margin-top:15px; max-height:250px; overflow-y:auto; font-size: 0.9rem;"></div>
+                    </div>
+                </div>
+
+                <div style="text-align:center; background: #fff; padding: 20px; border-radius: 10px; border: 1px solid #eee;">
+                    <h4 style="margin-top:0; color: #555; text-transform: uppercase; letter-spacing: 1px;">Perfil de Desempeño Radar</h4>
+                    <div style="position: relative; height: 350px; width: 100%;">
+                        <canvas id="chartR"></canvas>
+                    </div>
+                    <p style="font-size: 0.8rem; color: #888; margin-top: 15px;">
+                        * Los puntos más alejados del centro indican mayor nivel de riesgo en esa dimensión.
+                    </p>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div id="vistaSugerencias" class="seccion-vista" style="display:none;">
+        <div class="card">
+            <h3>⚙️ Biblioteca de Recomendaciones Técnicas</h3>
+            <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; background: #f9f9f9; padding: 15px; border-radius: 10px; border: 1px solid #eee;">
+                <select id="sugDim" style="flex: 1; min-width: 150px; margin:0;">
+                    <option value="Cognitiva">Cognitiva</option>
+                    <option value="Lenguaje">Lenguaje</option>
+                    <option value="Social">Social</option>
+                    <option value="Motriz">Motriz</option>
+                </select>
+                <select id="sugRie" style="flex: 1; min-width: 150px; margin:0;">
+                    <option value="ALTO">Riesgo Alto</option>
+                    <option value="MEDIO">Riesgo Medio</option>
+                    <option value="BAJO">Riesgo Bajo</option>
+                </select>
+                <input type="text" id="sugTexto" placeholder="Escriba la recomendación técnica sugerida..." style="flex: 3; min-width: 250px; margin:0;">
+                <button class="btn" style="background: var(--s);" onclick="guardarSugerencia(event)">➕ AGREGAR</button>
+            </div>
+
+            <div class="table-responsive">
+                <table style="width:100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: #f4f4f4;">
+                            <th style="padding:10px;">Dimensión</th>
+                            <th style="padding:10px;">Riesgo</th>
+                            <th style="padding:10px;">Sugerencia Técnica</th>
+                            <th style="padding:10px; text-align: center;">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="listaSugerencias"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+// 1. CONFIGURACIÓN ÚNICA DE SUPABASE
+const S_URL = "https://vdinrxinmvnujlrewzto.supabase.co";
+const S_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZkaW5yeGlubXZudWpscmV3enRvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI2NTIwODMsImV4cCI6MjA4ODIyODA4M30.BKD3m-J2bQ_vS-AewEhVUrdplq7hmomaBx-NqPRO3AU";
+
+const _sb = supabase.createClient(S_URL, S_KEY);
+
+// 2. VARIABLES GLOBALES
+let sugerenciasDB = []; // Fuente de datos para la biblioteca
+
+/**
+ * Carga la biblioteca desde la tabla correcta: libreria_sugerencias
+ */
+async function cargarLibreriaSugerencias() {
+    console.log("📥 Conectando a: libreria_sugerencias...");
+    try {
+        const { data, error } = await _sb
+            .from('libreria_sugerencias')
+            .select('*');
+
+        if (error) throw error;
+
+        // Guardamos en ambas para asegurar compatibilidad
+        sugerenciasDB = data || [];
+        window.libreriaSugerencias = sugerenciasDB; 
+
+        console.log("✅ Datos recuperados:", sugerenciasDB.length);
+        
+        // Verificamos en consola qué nombres de columna trajo Supabase
+        if (data.length > 0) console.log("Estructura de la tabla:", data[0]);
+
+        listarSugerencias();
+        
+    } catch (e) {
+        console.error("❌ Error de conexión:", e.message);
+        const tabla = document.getElementById('listaSugerencias');
+        if (tabla) tabla.innerHTML = `<tr><td colspan="4" style="color:red; text-align:center;">Error: ${e.message}</td></tr>`;
+    }
+}
+
+
+// --- 3. FUNCIONES DE LOGIN Y NAVEGACIÓN ---
+async function login() {
+    const userInp = document.getElementById('user');
+    const passInp = document.getElementById('pass');
+
+    if (!userInp.value || !passInp.value) {
+        alert("⚠️ Por favor ingresa usuario y contraseña");
+        return;
+    }
+
+    try {
+        console.log("--- Intento de Login ---");
+        
+        // 1. Consulta a Supabase: Traemos todos los campos (incluyendo logo y dane)
+        const { data, error } = await _sb
+            .from('usuarios') 
+            .select('*')
+            .eq('usuario', userInp.value)
+            .eq('clave', passInp.value)
+            .single();
+
+        if (error || !data) {
+            alert("❌ Usuario o contraseña incorrectos");
+            return;
+        }
+
+        // 2. Guardar datos globales de la sede
+        window.sedeActual = data; // Guardamos el objeto completo { sede, logo, dane, ... }
+        window.sede = data.sede;  // Compatibilidad con tu código anterior
+        
+        console.log("✅ Acceso concedido a: " + window.sede);
+
+        // 3. ACTUALIZAR ESCUDO Y DANE EN LA INTERFAZ
+        actualizarEscudoInterfaz();
+
+        // 4. CARGA DE DATOS EN PARALELO
+        console.log("📊 Cargando datos iniciales...");
+        await Promise.all([
+            cargarLibreriaSugerencias(),
+            cargarDatosEstudiantes() 
+        ]);
+
+        // 5. Mostrar la interfaz
+        showS('dash');
+
+    } catch (err) {
+        console.error("error fatal en login:", err);
+        alert("Falla de conexión al servidor");
+    }
+}
+
+
+async function load() {
+    console.log("Ejecutando carga de datos y filtros...");
+
+    // 1. Verificación de seguridad: ¿Hay una sede logueada?
+    if (!window.sede || !window.sede.codigo) {
+        console.warn("⚠️ Intento de carga sin sesión activa.");
+        return;
+    }
+
+    try {
+        // 2. Consulta a Supabase usando el código de la sede activa
+        const { data, error } = await _sb
+            .from('estudiantes')
+            .select('*')
+            .eq('codigo_sede', window.sede.codigo)
+            .order('nombre');
+
+        if (error) throw error;
+
+        // 3. Guardamos los datos en la variable global 'db'
+        window.db = data || [];
+        console.log("📊 Estudiantes recuperados:", window.db.length);
+
+        // 4. Lógica de Filtros (Grado y Sección)
+        // Extraemos valores únicos y eliminamos nulos
+        const gs = [...new Set(window.db.map(x => x.grado))].filter(Boolean).sort();
+        const ss = [...new Set(window.db.map(x => x.seccion))].filter(Boolean).sort();
+
+        // 5. Poblar selectores de HTML (fGra y fSec)
+        const selectGrado = document.getElementById('fGra');
+        const selectSeccion = document.getElementById('fSec');
+
+        if (selectGrado) {
+            selectGrado.innerHTML = '<option value="ALL">Grado: Todos</option>' + 
+                gs.map(g => `<option value="${g}">${g}</option>`).join('');
+        }
+        
+        if (selectSeccion) {
+            selectSeccion.innerHTML = '<option value="ALL">Sección: Todas</option>' + 
+                ss.map(s => `<option value="${s}">${s}</option>`).join('');
+        }
+
+        // 6. Dibujar la tabla de estudiantes
+        if (typeof render === 'function') {
+            render();
+        }
+
+    } catch (err) {
+        console.error("❌ Error en load():", err.message);
+    }
+}
+
+function showS(id) {
+    const subVistas = ['dash', 'list', 'perfil', 'vistaSugerencias'];
+    const mainSection = document.getElementById('mainSection');
+    const loginSection = document.getElementById('loginSection');
+
+    // 1. Manejo de Secciones Principales
+    if (subVistas.includes(id)) {
+        if (loginSection) {
+            loginSection.style.display = 'none';
+            loginSection.classList.remove('activa');
+        }
+        if (mainSection) {
+            mainSection.classList.add('activa'); // Activa el display: block !important del CSS
+            mainSection.style.visibility = 'visible';
+            mainSection.style.opacity = '1';
+        }
+    } else if (id === 'loginSection') {
+        if (mainSection) {
+            mainSection.classList.remove('activa');
+            mainSection.style.display = 'none';
+        }
+        if (loginSection) {
+            loginSection.style.display = 'block';
+            loginSection.classList.add('activa');
+        }
+        return;
+    }
+
+    // 2. Ocultar todas las sub-vistas
+    subVistas.forEach(v => {
+        const el = document.getElementById(v);
+        if (el) {
+            el.classList.remove('activa');
+            el.style.display = 'none';
+            el.style.opacity = '0';
+        }
+    });
+
+    // 3. Mostrar la vista seleccionada
+    const target = document.getElementById(id);
+    if (target) {
+        // Importante: Primero display, luego clase activa para la animación
+        target.style.display = 'block';
+        
+        // Reflujo para que el navegador note el cambio de display antes de la opacidad
+        target.offsetHeight; 
+
+        setTimeout(() => {
+            target.classList.add('activa');
+            target.style.opacity = '1';
+            target.style.visibility = 'visible';
+            console.log("📍 Vista activa confirmada: " + id);
+        }, 20);
+
+        // 4. Lógica de Renderizado
+        // Aumentamos a 150ms para asegurar que los estilos de la tabla (CSS) ya aplicaron
+        setTimeout(() => {
+            if (id === 'vistaSugerencias') {
+                if (typeof listarSugerencias === 'function') {
+                    console.log("🎨 Dibujando librería de sugerencias...");
+                    listarSugerencias();
+                }
+            }
+            
+            if (id === 'dash' && typeof render === 'function') {
+                if (window.db && window.db.length > 0) {
+                    render();
+                } else {
+                    console.warn("⚠️ Dashboard sin datos cargados.");
+                }
+            }
+        }, 150); 
+    } else {
+        console.error("❌ No se encontró el elemento con ID:", id);
+    }
+}
+
+
+
+// 4. FUNCIONES DE ACCESO Y REGISTRO
+async function ingresar() {
+    console.log("--- Intento de Login ---");
+    
+    // Captura del botón para feedback visual
+    const targetBtn = event ? event.target : null;
+    const originalText = targetBtn ? targetBtn.innerText : "INGRESAR";
+
+    try {
+        const dane_txt = document.getElementById('lCod').value.trim();
+        const pass_txt = document.getElementById('lPass').value.trim();
+
+        if (!dane_txt || !pass_txt) {
+            alert("⚠️ Por favor, ingresa el código DANE y la contraseña.");
+            return;
+        }
+
+        if (targetBtn) {
+            targetBtn.innerText = "Verificando...";
+            targetBtn.disabled = true;
+        }
+
+        // 1. Consulta a Supabase
+        const { data, error } = await _sb
+            .from('instituciones')
+            .select('*')
+            .eq('codigo', dane_txt)
+            .maybeSingle();
+
+        if (error) throw error;
+
+        // 2. Validación de credenciales
+        if (data && data.password === pass_txt) {
+            // ASIGNACIÓN GLOBAL (SedeActual para el PDF y Sede para compatibilidad)
+            window.sedeActual = data; 
+            window.sede = data; 
+            console.log("✅ Acceso concedido a:", data.nombre);
+
+            // 3. Preparar Interfaz (Textos y ESCUDO)
+            if (document.getElementById('dispName')) document.getElementById('dispName').innerText = data.nombre;
+            if (document.getElementById('dispDane')) document.getElementById('dispDane').innerText = "DANE: " + data.codigo;
+            
+            // --- ACTUALIZAR ESCUDOS EN FORMULARIOS E INTERFAZ ---
+            actualizarEscudosEnPantalla(data.logo);
+
+            // 4. CAMBIO DE VISTA EN CASCADA
+            showS('mainSection'); 
+            showS('dash'); 
+
+            // 5. CARGA DE DATOS
+            setTimeout(async () => {
+                console.log("📊 Iniciando carga de Dashboard...");
+                try {
+                    if (typeof cargarLibreriaSugerencias === 'function') await cargarLibreriaSugerencias();
+                    if (typeof load === 'function') await load(); 
+                } catch (loadErr) {
+                    console.error("Error en carga post-login:", loadErr);
+                }
+            }, 300);
+
+        } else {
+            alert("❌ Código DANE o contraseña incorrectos.");
+            if (targetBtn) {
+                targetBtn.innerText = originalText;
+                targetBtn.disabled = false;
+            }
+        }
+
+    } catch (err) {
+        console.error("Error crítico en login:", err);
+        if (err.message?.includes('fetch')) {
+            alert("💥 Error de Red: Asegúrate de estar usando un servidor local (Live Server).");
+        } else {
+            alert("💥 Error: " + err.message);
+        }
+        if (targetBtn) {
+            targetBtn.innerText = originalText;
+            targetBtn.disabled = false;
+        }
+    }
+}
+
+
+
+function toggleReg(s) { 
+    loginBox.style.display = s ? 'none' : 'block'; 
+    regBox.style.display = s ? 'block' : 'none'; 
+}
+
+
+async function registrarSede() {
+    const { error } = await _sb.from('instituciones').insert([
+        { nombre: rNom.value, codigo: rCod.value.toUpperCase(), password: rPass.value }
+    ]);
+    if(!error) { 
+        alert("Sede registrada con éxito"); 
+        toggleReg(false); 
+    } else {
+        alert("Error al registrar: " + error.message);
+    }
+}
+
+function render() {
+    try {
+        console.log("🔄 Iniciando Render...");
+        
+        // 0. Validación de la base de datos (Usando window.db para asegurar alcance global)
+        const data = window.db || [];
+        if (!Array.isArray(data)) {
+            console.error("❌ La base de datos 'db' no está disponible.");
+            return;
+        }
+
+        // 1. Captura segura de filtros
+        const getVal = (id) => document.getElementById(id)?.value || 'ALL';
+        const selG = getVal('fGra'); 
+        const selS = getVal('fSec'); 
+        const selR = getVal('fRie');
+
+        // 2. FILTRADO
+        const filtered = data.filter(e => {
+            const p = e.puntajes || { Cognitiva: 0, Lenguaje: 0, Social: 0, Motriz: 0 };
+            const max = Math.max(...Object.values(p));
+            const rActual = max > 7 ? 'ALTO' : (max > 3 ? 'MEDIO' : 'BAJO');
+            
+            const gradoEstudiante = String(e.grado || "").replace('°', '').trim();
+            const gradoFiltro = String(selG).replace('°', '').trim();
+
+            const condG = (selG === 'ALL' || gradoEstudiante === gradoFiltro);
+            const condS = (selS === 'ALL' || String(e.seccion || "") === selS);
+            const condR = (selR === 'ALL' || rActual === selR);
+            
+            return condG && condS && condR;
+        });
+
+        // 3. REINICIO DE CONTADORES Y OBJETOS
+        let counts = { ALTO: 0, MEDIO: 0, BAJO: 0 };
+        let dimImpact = { Cognitiva: 0, Lenguaje: 0, Social: 0, Motriz: 0 };
+        let detMap = { 
+            ALTO: { Cognitiva:0, Lenguaje:0, Social:0, Motriz:0 },
+            MEDIO: { Cognitiva:0, Lenguaje:0, Social:0, Motriz:0 },
+            BAJO: { Cognitiva:0, Lenguaje:0, Social:0, Motriz:0 }
+        };
+
+        const tBody = document.getElementById('tBody');
+        if (tBody) tBody.innerHTML = '';
+
+        // 4. PROCESAMIENTO Y CONSTRUCCIÓN DE TABLA
+        // Usamos un fragmento de documento o un string acumulado para mejorar el rendimiento
+        let rowsHtml = '';
+
+        filtered.forEach(e => {
+            const p = e.puntajes || { Cognitiva: 0, Lenguaje: 0, Social: 0, Motriz: 0 };
+            const max = Math.max(...Object.values(p));
+            const rE = max > 7 ? 'ALTO' : (max > 3 ? 'MEDIO' : 'BAJO');
+            
+            counts[rE]++;
+
+            // Acumular impacto por dimensión
+            for (let d in dimImpact) {
+                const val = parseFloat(p[d]) || 0;
+                dimImpact[d] += val; 
+                const dLvl = val > 7 ? 'ALTO' : (val > 3 ? 'MEDIO' : 'BAJO');
+                if (detMap[dLvl]) detMap[dLvl][d]++; 
+            }
+
+            // Crear la fila (Asegurando que el documento sea String para verFicha)
+            const docId = String(e.documento || '').trim();
+            const badgeColor = rE === 'ALTO' ? '#ff4d4d' : (rE === 'MEDIO' ? '#ffa500' : '#2ecc71');
+
+            rowsHtml += `
+                <tr>
+                    <td><b style="color:${badgeColor}">${rE}</b></td>
+                    <td>${docId || '---'}</td>
+                    <td>${e.nombre || 'Sin Nombre'}</td>
+                    <td>${e.grado || ''}°${e.seccion || ''}</td>
+                    <td>
+                        <button class="btn-icon" onclick="verFicha('${docId}')" title="Ver Perfil">👁️</button>
+                        <button class="btn-icon" onclick="openQuickEdit('${docId}')" title="Editar">✏️</button> 
+                        <button class="btn-icon" onclick="del('${e.id}')" title="Eliminar">🗑️</button>
+                    </td>
+                </tr>`;
+        });
+
+        if (tBody) tBody.innerHTML = rowsHtml;
+
+        // 5. ACTUALIZACIÓN DE INDICADORES
+        const updateText = (id, val) => {
+            const el = document.getElementById(id);
+            if (el) el.innerText = val;
+        };
+
+        updateText('vT', filtered.length);
+        updateText('vA', counts.ALTO);
+        updateText('vM', counts.MEDIO);
+        updateText('vB', counts.BAJO);
+
+        // 6. LLENAR DESGLOSE POR CAJAS
+        const fillBox = (id, targetLvl) => {
+            const box = document.getElementById(id);
+            if (!box) return;
+            
+            let html = '';
+            for (let dim in detMap[targetLvl]) {
+                const cantidad = detMap[targetLvl][dim];
+                if (cantidad > 0) {
+                    html += `
+                        <div style="display:flex; justify-content:space-between; border-bottom:1px solid rgba(255,255,255,0.1); font-size:0.85rem; padding: 2px 0;">
+                            <span>${dim}</span> <b>${cantidad}</b>
+                        </div>`;
+                }
+            }
+            box.innerHTML = html || '<span style="opacity:0.6; font-size:0.8rem;">Sin registros</span>';
+        };
+
+        fillBox('dA', 'ALTO');
+        fillBox('dM', 'MEDIO');
+        fillBox('dB', 'BAJO');
+
+        // 7. RENDERIZAR GRÁFICAS DEL DASHBOARD
+        if (typeof drawCharts === 'function' && filtered.length > 0) {
+            drawCharts(counts, dimImpact);
+        }
+
+    } catch (error) {
+        console.error("❌ Error crítico en función render():", error);
+    }
+}
+
+async function verFicha(doc) {
+    console.log("🚀 Ejecutando verFicha para el documento:", doc);
+    try {
+        // 1. Buscar el estudiante
+        const lista = window.db || [];
+        const est = lista.find(x => String(x.documento).trim() === String(doc).trim());
+        
+        if (!est) {
+            console.error("❌ Estudiante no encontrado en window.db");
+            return alert("Estudiante no encontrado.");
+        }
+
+        window.currentE = est; // Guardar globalmente para addBit()
+
+        // 2. Llenar textos básicos y Escudo
+        const pNom = document.getElementById('pNom');
+        const pInfo = document.getElementById('pInfo');
+        const imgEsc = document.getElementById('imgEscudoPerfil');
+        
+        if (pNom) pNom.innerText = est.nombre.toUpperCase();
+        if (pInfo) pInfo.innerText = `Grado: ${est.grado}°${est.seccion} | Doc: ${est.documento}`;
+        if (imgEsc && window.sedeActual?.logo) {
+            imgEsc.src = window.sedeActual.logo;
+            imgEsc.style.display = 'block';
+        }
+
+        // 3. CARGAR DIAGNÓSTICO EN PANTALLA
+        const pSug = document.getElementById('pSugerencias');
+        if (pSug) {
+            let htmlAlertas = `<h3 style="color:var(--p); margin-bottom:15px; border-left: 4px solid var(--p); padding-left: 10px;">📊 Diagnóstico y Alertas</h3>`;
+            const puntajes = est.puntajes || {};
+            let tieneAlertas = false;
+
+            for (let dim in puntajes) {
+                const p = parseFloat(puntajes[dim]) || 0;
+                if (p >= 4) { 
+                    tieneAlertas = true;
+                    const esAlto = p >= 7;
+                    const color = esAlto ? '#e74c3c' : '#f1c40f';
+                    const bg = esAlto ? '#fdedec' : '#fef9e7';
+                    const nivel = esAlto ? 'CRÍTICO' : 'SEGUIMIENTO';
+
+                    htmlAlertas += `
+                        <div style="background:${bg}; border-left:5px solid ${color}; padding:12px; margin-bottom:10px; border-radius:8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <b style="text-transform:uppercase; font-size:0.85rem; color:#2c3e50;">${dim}</b>
+                                <span style="background:${color}; color:white; padding:2px 8px; border-radius:12px; font-size:0.7rem; font-weight:bold;">${nivel} (${p}/10)</span>
+                            </div>
+                        </div>`;
+                }
+            }
+            if (!tieneAlertas) {
+                htmlAlertas += `<p style="color:green; padding:15px; background:#f0fff4; border-radius:8px;">✅ Sin alertas significativas detectadas.</p>`;
+            }
+            pSug.innerHTML = htmlAlertas;
+        }
+
+        // 4. CARGAR HISTORIAL / BITÁCORA (Lo que faltaba)
+        const bitLis = document.getElementById('bitLis');
+        if (bitLis) {
+            const historial = est.historial || []; // Asegúrate de que en tu DB se llame 'historial'
+            if (historial.length > 0) {
+                // Mostramos el más reciente primero
+                bitLis.innerHTML = historial.slice().reverse().map(h => `
+                    <div style="background: white; padding: 12px; border-radius: 8px; margin-bottom: 10px; border-left: 3px solid var(--s); box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                        <small style="color: #888; font-weight: bold;">📅 ${h.fecha}</small>
+                        <p style="margin: 5px 0 0; color: #444; font-size: 0.9rem;">${h.texto}</p>
+                    </div>
+                `).join('');
+            } else {
+                bitLis.innerHTML = `<p style="text-align:center; color:#bbb; padding:10px;">📭 No hay registros en la bitácora.</p>`;
+            }
+        }
+
+        // 5. Mostrar/Ocultar Botón de Acta
+        const btnActa = document.getElementById('btnActa');
+        if (btnActa) {
+            const esRiesgoAlto = Object.values(est.puntajes || {}).some(v => parseFloat(v) >= 7);
+            btnActa.style.display = esRiesgoAlto ? 'inline-block' : 'none';
+        }
+
+        // 6. Navegar y Radar
+        if (typeof navegar === 'function') navegar('perfil');
+        if (typeof renderRadarEstudiante === 'function') {
+            setTimeout(() => renderRadarEstudiante(est), 300);
+        }
+
+    } catch (error) {
+        console.error("❌ Error crítico en verFicha:", error);
+    }
+}
+
+
+// ... Resto de funciones (verFicha, save, del, etc.) iguales a v144.0 para mantener estabilidad ...
+async function exportarPDF(btn) {
+    const originalText = btn.innerText;
+    
+    try {
+        btn.innerText = "Generando...";
+        btn.disabled = true;
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('p', 'mm', 'a4');
+        
+        const sede = window.sedeActual || {};
+        const nombreInst = (sede.nombre || "INSTITUCIÓN EDUCATIVA").toUpperCase();
+        const logoRaw = sede.logo ? normalizarBase64Image(sede.logo) : null;
+
+        // --- ENCABEZADO REPETIBLE ---
+        const dibujarEncabezado = (pdf) => {
+            if (logoRaw) {
+                try { pdf.addImage(logoRaw, 'PNG', 15, 10, 20, 20); } catch (e) {}
+            }
+            pdf.setFontSize(14).setFont(undefined, 'bold').text(nombreInst, 38, 16);
+            pdf.setFontSize(9).setFont(undefined, 'normal').text(`CÓDIGO DANE: ${sede.codigo || 'N/A'}`, 38, 21);
+            pdf.setFontSize(10).text("REPORTE ESTRATÍFICO DE CARACTERIZACIÓN", 38, 26);
+            pdf.line(15, 32, 195, 32);
+        };
+
+        // --- PÁGINA 1: GRÁFICAS ---
+        dibujarEncabezado(doc);
+        const stats = [
+            document.getElementById('vT')?.innerText || "0",
+            document.getElementById('vA')?.innerText || "0",
+            document.getElementById('vM')?.innerText || "0",
+            document.getElementById('vB')?.innerText || "0"
+        ];
+        doc.autoTable({
+            startY: 38,
+            head: [['Total', 'Riesgo Alto', 'Riesgo Medio', 'Riesgo Bajo']],
+            body: [stats],
+            theme: 'grid',
+            headStyles: { fillColor: [44, 62, 80] }
+        });
+
+        const canvasBarra = document.getElementById('chartB');
+        if (canvasBarra) {
+            doc.addImage(canvasBarra.toDataURL("image/png"), 'PNG', 15, doc.lastAutoTable.finalY + 10, 180, 70);
+        }
+
+        // --- PÁGINA 2: ESTUDIANTES ---
+        doc.addPage();
+        dibujarEncabezado(doc);
+
+        const gradoF = document.getElementById('fGra')?.value || "ALL";
+        const seccionF = document.getElementById('fSec')?.value || "ALL";
+        const riesgoF = document.getElementById('fRie')?.value || "ALL";
+
+        // FILTRADO Y CÁLCULO DE RIESGO EN TIEMPO REAL
+        const filtrados = (window.db || []).filter(est => {
+            // 1. Calcular riesgo real basado en puntajes
+            const pts = Object.values(est.puntajes || {});
+            const maxP = pts.length > 0 ? Math.max(...pts) : 0;
+            
+            let riesgoReal = "BAJO";
+            if (maxP > 7) riesgoReal = "ALTO";
+            else if (maxP > 3) riesgoReal = "MEDIO";
+            
+            est.riesgoCalculado = riesgoReal; // Lo guardamos temporalmente
+
+            // 2. Aplicar filtros de la interfaz
+            const mG = gradoF === "ALL" || String(est.grado) === gradoF;
+            const mS = seccionF === "ALL" || est.seccion === seccionF;
+            const mR = riesgoF === "ALL" || est.riesgoCalculado === riesgoF;
+            return mG && mS && mR;
+        });
+
+        doc.setFontSize(11).setFont(undefined, 'bold').text("DETALLE DE ESTUDIANTES", 15, 40);
+
+        const bodyEstudiantes = filtrados.map(e => [
+            e.riesgoCalculado, // Usamos el riesgo que acabamos de calcular
+            e.documento,
+            e.nombre.toUpperCase(),
+            `${e.grado}°${e.seccion}`
+        ]);
+
+        doc.autoTable({
+            startY: 45,
+            head: [['RIESGO', 'DOCUMENTO', 'NOMBRE COMPLETO', 'GRADO']],
+            body: bodyEstudiantes,
+            theme: 'striped',
+            headStyles: { fillColor: [52, 73, 94] },
+            styles: { fontSize: 8 },
+            didParseCell: function(data) {
+                if (data.section === 'body' && data.column.index === 0) {
+                    const r = data.cell.raw;
+                    if (r === 'ALTO') {
+                        data.cell.styles.textColor = [200, 0, 0]; // Rojo
+                        data.cell.styles.fontStyle = 'bold';
+                    } else if (r === 'MEDIO') {
+                        data.cell.styles.textColor = [255, 140, 0]; // Naranja/Amarillo
+                        data.cell.styles.fontStyle = 'bold';
+                    } else {
+                        data.cell.styles.textColor = [39, 174, 96]; // Verde para bajo
+                    }
+                }
+            }
+        });
+
+        // --- FIRMAS ---
+        let finalY = doc.lastAutoTable.finalY + 35;
+        if (finalY > 260) { doc.addPage(); dibujarEncabezado(doc); finalY = 50; }
+        doc.line(20, finalY, 90, finalY);
+        doc.text("ORIENTACIÓN ESCOLAR", 55, finalY + 5, { align: 'center' });
+        doc.line(120, finalY, 190, finalY);
+        doc.text("RECTORÍA / COORDINACIÓN", 155, finalY + 5, { align: 'center' });
+
+        doc.save(`Reporte_NEE_${nombreInst}.pdf`);
+
+    } catch (err) {
+        console.error(err);
+        alert("Error al generar PDF");
+    } finally {
+        btn.innerText = originalText;
+        btn.disabled = false;
+    }
+}
+
+
+
+/**
+ * Función separada para renderizar el Radar
+ */
+function renderRadarEstudiante(est) {
+    const canvas = document.getElementById('chartR');
+    if (!canvas) return;
+    
+    // Destruir instancia previa si existe
+    if (window.chartR instanceof Chart) {
+        window.chartR.destroy();
+    }
+    
+    const ctx = canvas.getContext('2d');
+    const labels = Object.keys(est.puntajes || {});
+    const values = Object.values(est.puntajes || {});
+
+    window.chartR = new Chart(ctx, {
+        type: 'radar',
+        data: {
+            labels: labels.map(l => l.toUpperCase()),
+            datasets: [{
+                label: 'Desempeño',
+                data: values,
+                backgroundColor: 'rgba(44, 62, 80, 0.2)',
+                borderColor: 'rgba(44, 62, 80, 1)',
+                borderWidth: 2,
+                pointBackgroundColor: 'rgba(231, 76, 60, 1)',
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: 'rgba(231, 76, 60, 1)'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                r: {
+                    min: 0,
+                    max: 10,
+                    beginAtZero: true,
+                    ticks: { stepSize: 2, display: false },
+                    grid: { color: '#ddd' },
+                    angleLines: { color: '#eee' },
+                    pointLabels: { font: { size: 10, weight: 'bold' } }
+                }
+            },
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+}
+
+
+async function addBit() {
+    const input = document.getElementById('bitIn');
+    const btn = event.target; // Capturamos el botón que disparó el clic
+    
+    // 1. Validaciones de seguridad
+    if (!window.currentE) return alert("No hay un estudiante seleccionado.");
+    const texto = input.value.trim();
+    if (!texto) return alert("Por favor, escriba una nota antes de guardar.");
+
+    // 2. Bloquear botón para evitar duplicados
+    const originalText = btn.innerText;
+    btn.innerText = "Guardando...";
+    btn.disabled = true;
+
+    // 3. Crear la nueva nota con formato profesional
+    const nuevaNota = {
+        fecha: new Date().toLocaleString('es-CO', { 
+            day: '2-digit', month: '2-digit', year: 'numeric', 
+            hour: '2-digit', minute: '2-digit' 
+        }),
+        texto: texto
+    };
+
+    // 4. Preparar el nuevo historial
+    const historialActualizado = [...(window.currentE.historial || []), nuevaNota];
+
+    try {
+        // 5. Actualizar en Supabase (Usando la tabla 'estudiantes')
+        // Importante: Usamos 'documento' o 'id' según cómo esté tu tabla
+        const { error } = await _sb
+            .from('estudiantes')
+            .update({ historial: historialActualizado })
+            .eq('documento', window.currentE.documento); 
+
+        if (error) throw error;
+
+        // 6. Sincronizar localmente el objeto y la base de datos global
+        window.currentE.historial = historialActualizado;
+        
+        // Actualizamos también el registro en window.db para que el cambio persista si cerramos la ficha
+        const index = window.db.findIndex(e => e.documento === window.currentE.documento);
+        if (index !== -1) window.db[index].historial = historialActualizado;
+
+        // 7. Limpiar campo y REFRESCAR PANTALLA
+        input.value = '';
+        
+        // Llamamos a verFicha para que redibuje los cuadritos de la bitácora automáticamente
+        await verFicha(window.currentE.documento);
+        
+        console.log("✅ Nota integrada al historial con éxito.");
+
+    } catch (error) {
+        console.error("❌ Error al guardar bitácora:", error);
+        alert("No se pudo conectar con el servidor: " + error.message);
+    } finally {
+        // Restaurar botón
+        btn.innerText = originalText;
+        btn.disabled = false;
+    }
+}
+
+
+function mostrarHistorial() {
+    const lista = document.getElementById('bitLis');
+    if (!lista) return;
+
+    if (!currentE.historial || currentE.historial.length === 0) {
+        lista.innerHTML = '<p style="color:gray; font-style:italic; font-size:0.8rem;">No hay observaciones registradas.</p>';
+        return;
+    }
+
+    // Mostramos las notas, la más reciente primero (.reverse)
+    lista.innerHTML = currentE.historial.slice().reverse().map(h => `
+        <div style="background:#f9f9f9; padding:10px; border-radius:5px; margin-bottom:8px; border-left:3px solid var(--a); font-size:0.85rem;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                <b style="color:var(--p);">${h.fecha}</b>
+            </div>
+            <div style="color:#333; line-height:1.4;">${h.texto}</div>
+        </div>
+    `).join('');
+}
+
+function openM(doc = null) {
+    // 1. Resetear el Wizard al Paso 1
+    currentStep = 1;
+    const steps = document.querySelectorAll('.test-step');
+    steps.forEach(s => s.classList.remove('active'));
+    if(steps[0]) steps[0].classList.add('active');
+    
+    // Ajuste visual de botones y barra
+    document.getElementById('pFill').style.width = '20%'; // 1 de 5 es 20%
+    document.getElementById('btnNext').style.display = 'inline-flex';
+    document.getElementById('btnSave').style.display = 'none';
+    document.getElementById('btnPrev').disabled = true;
+
+    // 2. Limpiar todos los campos y checkboxes
+    document.getElementById('eId').value = "";
+    document.getElementById('mNom').value = "";
+    document.getElementById('mDoc').value = "";
+    document.getElementById('mEda').value = ""; // No olvides la edad
+    document.getElementById('mGra').value = "";
+    document.getElementById('mSec').value = "";
+    document.querySelectorAll('.ind').forEach(cb => cb.checked = false);
+
+    // 3. Mostrar Modal
+    document.getElementById('modal').style.display = 'block';
+
+    // 4. Cargar datos si es una RE-EVALUACIÓN
+    if (doc !== null) {
+        // Buscamos en la lista global de estudiantes que cargamos de Supabase
+        // Asumiendo que guardas tus estudiantes en una variable global llamada 'estudiantesLista'
+        const estudiante = (typeof estudiantesLista !== 'undefined') 
+            ? estudiantesLista.find(x => x.documento == doc) 
+            : null;
+        
+        if (estudiante) {
+            document.getElementById('eId').value = estudiante.id;
+            document.getElementById('mNom').value = estudiante.nombre;
+            document.getElementById('mDoc').value = estudiante.documento;
+            document.getElementById('mEda').value = estudiante.edad || "";
+            document.getElementById('mGra').value = estudiante.grado;
+            document.getElementById('mSec').value = estudiante.seccion;
+            
+            // Si el estudiante ya tiene indicadores marcados en la DB, 
+            // aquí podrías marcarlos, pero usualmente para un nuevo test se dejan limpios.
+            console.log("Cargando datos para re-evaluación de:", estudiante.nombre);
+        }
+    }
+}
+
+// Guarda de nuevo test
+async function save() {
+    try {
+        const getSafeVal = (id) => {
+            const el = document.getElementById(id);
+            if (!el) {
+                console.error("ID no encontrado en el HTML: " + id);
+                return null;
+            }
+            return el.value;
+        };
+
+        const id = getSafeVal('eId');
+        const nombre = getSafeVal('mNom');
+        const documento = getSafeVal('mDoc');
+        const edad = getSafeVal('mEda');
+        const grado = getSafeVal('mGra');
+        const seccion = getSafeVal('mSec');
+
+        // Validaciones de integridad
+        if (nombre === null || documento === null) {
+            alert("Error Técnico: Faltan campos críticos en el formulario.");
+            return;
+        }
+
+        if (!nombre.trim() || !documento.trim()) {
+            alert("⚠️ El nombre y el documento son obligatorios.");
+            return;
+        }
+
+        const calcular = (dim) => {
+            let suma = 0;
+            // Corregido: Selector más específico para evitar interferencias
+            const checks = document.querySelectorAll(`#modal .test-section[data-dim="${dim}"] .ind:checked`);
+            checks.forEach(c => suma += parseFloat(c.value));
+            return suma;
+        };
+
+        const payload = {
+            nombre: nombre.toUpperCase().trim(),
+            documento: documento.trim(),
+            edad: edad ? parseInt(edad) : null,
+            grado: grado,
+            seccion: seccion,
+            codigo_sede: sede.codigo,
+            puntajes: {
+                Cognitiva: calcular('Cognitiva'),
+                Lenguaje: calcular('Lenguaje'),
+                Social: calcular('Social'),
+                Motriz: calcular('Motriz')
+            }
+        };
+
+        console.log("💾 Procesando guardado...", payload);
+
+        let res;
+        if (id && id !== "") {
+            res = await _sb.from('estudiantes').update(payload).eq('id', id);
+        } else {
+            // Añadimos la fecha de creación en el historial para nuevos registros
+            payload.historial = [{
+                fecha: new Date().toLocaleDateString(),
+                texto: "Evaluación inicial registrada."
+            }];
+            res = await _sb.from('estudiantes').insert([payload]);
+        }
+
+        if (res.error) throw res.error;
+
+        // --- PROCESO DE ACTUALIZACIÓN DE INTERFAZ ---
+        
+        // 1. Cerramos el modal
+        closeM();
+        
+        // 2. ACTUALIZACIÓN CRÍTICA: Esperamos a que load() termine
+        // Esto garantiza que window.db tenga los nuevos datos antes de abrir la ficha
+        if (typeof load === 'function') {
+            await load(); 
+        }
+
+        // 3. Feedback al usuario
+        alert("✅ Datos sincronizados con éxito.");
+
+        // 4. Abrir la ficha actualizada si ya conocemos el documento
+        if (typeof verFicha === 'function') {
+            setTimeout(() => {
+                verFicha(payload.documento);
+            }, 400); // Un poco más de tiempo para que el modal termine su transición CSS
+        }
+
+    } catch (err) {
+        console.error("💥 Error en save():", err);
+        alert("💥 Error al procesar: " + err.message);
+    }
+}
+
+
+async function del(id) {
+    // 1. Confirmación de seguridad
+    const confirmacion = confirm("⚠️ ¿Estás seguro de que deseas eliminar este registro? Esta acción no se puede deshacer.");
+    
+    if (!confirmacion) return; // Si el usuario cancela, no hacemos nada
+
+    try {
+        console.log("Intentando eliminar estudiante con ID:", id);
+
+        const { error } = await _sb
+            .from('estudiantes')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+
+        // 2. Feedback visual
+        alert("🗑️ Registro eliminado correctamente.");
+
+        // 3. RECARGA DINÁMICA
+        // Al igual que con el update, llamamos a load() 
+        // para que la tabla y las gráficas se recalculen sin ese estudiante.
+        await load();
+
+    } catch (err) {
+        console.error("❌ Error al eliminar:", err.message);
+        alert("Hubo un error al intentar eliminar el registro: " + err.message);
+    }
+}
+
+
+function closeM() {
+    const modal = document.getElementById('modal');
+    if (modal) {
+        // 1. Ocultar el modal
+        modal.style.display = 'none';
+        
+        // 2. Resetear el flujo del test para la próxima apertura
+        currentStep = 1; 
+        
+        // 3. (Opcional) Limpiar los campos si no se guardaron
+        // document.getElementById('mNom').value = "";
+        // document.getElementById('mDoc').value = "";
+        
+        console.log("Modal cerrado y flujo reseteado.");
+    }
+}
+
+
+function actualizarContadores(data) {
+    document.getElementById('vT').innerText = data.length;
+    
+    const alto = data.filter(e => calcularRiesgo(e.puntajes) === 'ALTO').length;
+    const medio = data.filter(e => calcularRiesgo(e.puntajes) === 'MEDIO').length;
+    const bajo = data.filter(e => calcularRiesgo(e.puntajes) === 'BAJO').length;
+
+    document.getElementById('vA').innerText = alto;
+    document.getElementById('vM').innerText = medio;
+    document.getElementById('vB').innerText = bajo;
+}
+
+function search() { const q = bus.value.toLowerCase(); document.querySelectorAll('#tBody tr').forEach(tr => tr.style.display = tr.innerText.toLowerCase().includes(q) ? '' : 'none'); }
+function exportXLS() {
+    const ws = XLSX.utils.json_to_sheet(db.map(e => ({ Nombre: e.nombre, ID: e.documento, Grado: e.grado, Sec: e.seccion, ...e.puntajes })));
+    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Data");
+    XLSX.writeFile(wb, "Reporte_NEE.xlsx");
+}
+
+async function obtenerBitacoraCompleta(documento) {
+    console.log("🔍 Descargando historial de bitácora para:", documento);
+    try {
+        const { data, error } = await _supabase
+            .from('bitacora')
+            .select('fecha, anotacion')
+            .eq('estudiante_documento', documento)
+            .order('fecha', { ascending: false });
+
+        if (error) throw error;
+
+        if (!data || data.length === 0) return "Sin registros previos en bitácora.";
+
+        // Formateamos los registros: "DD/MM/YYYY: Anotación"
+        return data.map(b => {
+            const fecha = new Date(b.fecha).toLocaleDateString();
+            return `[${fecha}]: ${b.anotacion}`;
+        }).join('\n\n');
+
+    } catch (err) {
+        console.error("Error al obtener bitácora:", err);
+        return "Error al cargar el historial.";
+    }
+}
+
+async function pdfFichaIndividual() {
+    try {
+        const { jsPDF } = window.jspdf || {};
+        if (!jsPDF) return alert("Librería jsPDF no encontrada.");
+        const doc = new jsPDF();
+        
+        // 1. CAPTURA DE DATOS DESDE EL OBJETO GLOBAL (Más seguro)
+        const est = window.currentE;
+        if (!est) return alert("No hay datos de estudiante cargados. Abre la ficha primero.");
+
+        const nombreEst = est.nombre || "Estudiante";
+        // Recopilamos info para el análisis de contexto
+        const infoEstTexto = `Documento: ${est.documento} | Grado: ${est.grado}°${est.seccion}`;
+        const bitacoraTexto = (est.historial || []).map(h => `${h.fecha}: ${h.texto}`).join('\n');
+        
+        // Datos de la institución desde la interfaz
+        const nombreInst = document.getElementById('dispName')?.innerText || "INSTITUCIÓN EDUCATIVA";
+        const daneTexto = document.getElementById('dispDane')?.innerText || "DANE: N/A";
+
+        // 2. PROCESAMIENTO DE RECOMENDACIONES TÉCNICAS
+        const normalizar = (t) => t ? t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim() : "";
+        
+        // El contexto es diagnóstico inicial + bitácora para buscar palabras clave
+        const contextoAnalisis = normalizar(infoEstTexto + " " + bitacoraTexto);
+
+        const filasSugerencias = [];
+        const puntajes = est.puntajes || {};
+
+        for (let dim in puntajes) {
+            const p = parseFloat(puntajes[dim]) || 0;
+            // Solo procesar si requiere atención (> 3)
+            if (p > 3) {
+                const estado = p > 7 ? 'CRÍTICO' : 'SEGUIMIENTO';
+                const dNorm = normalizar(dim);
+                const eNorm = normalizar(estado);
+                
+                // Sugerencia por defecto
+                let sugerenciaFinal = "Realizar acompañamiento pedagógico y seguimiento en el aula.";
+
+                // Buscar sugerencia técnica en la base de datos local (libreriaSugerencias)
+                if (typeof window.libreriaSugerencias !== 'undefined') {
+                    const opciones = window.libreriaSugerencias.filter(s => 
+                        normalizar(s.dimension) === dNorm && normalizar(s.estado) === eNorm
+                    );
+
+                    if (opciones.length > 0) {
+                        // Lógica inteligente: buscar la que más coincida con la bitácora
+                        let mejorPuntaje = -1;
+                        let seleccionada = opciones[0];
+
+                        opciones.forEach(opt => {
+                            let puntos = 0;
+                            const palabrasClave = normalizar(opt.recomendacion || opt.sugerencia).split(" ");
+                            palabrasClave.forEach(palabra => {
+                                if (palabra.length > 4 && contextoAnalisis.includes(palabra)) puntos++;
+                            });
+                            if (puntos > mejorPuntaje) {
+                                mejorPuntaje = puntos;
+                                seleccionada = opt;
+                            }
+                        });
+                        sugerenciaFinal = seleccionada.recomendacion || seleccionada.sugerencia;
+                    }
+                }
+                // Añadimos la fila organizada
+                filasSugerencias.push([dim.toUpperCase(), estado, sugerenciaFinal]);
+            }
+        }
+
+        // 3. TABLA IDENTIFICACIÓN
+        doc.autoTable({
+            startY: 40,
+            theme: 'grid',
+            head: [[{ content: 'IDENTIFICACIÓN DEL ALUMNO', colSpan: 2, styles: { fillColor: [44, 62, 80], halign: 'center', textColor: [255,255,255] } }]],
+            body: [
+                ['NOMBRE COMPLETO:', nombreEst.toUpperCase()],
+                ['INFORMACIÓN ACADÉMICA:', infoEstTexto]
+            ],
+            styles: { fontSize: 8, cellPadding: 3 }
+        });
+
+        // 4. TABLA RECOMENDACIONES (3 columnas claras, corregido N/A)
+        doc.autoTable({
+            startY: doc.lastAutoTable.finalY + 5,
+            theme: 'grid',
+            head: [['DIMENSIÓN', 'ESTADO', 'RECOMENDACIÓN TÉCNICA SUGERIDA']],
+            body: filasSugerencias.length > 0 ? filasSugerencias : [['N/A', 'N/A', 'No se registran alertas que requieran recomendaciones técnicas urgentes.']],
+            headStyles: { fillColor: [52, 73, 94], halign: 'center' },
+            styles: { fontSize: 7, overflow: 'linebreak' },
+            columnStyles: { 
+                0: { cellWidth: 35, fontStyle: 'bold' }, 
+                1: { cellWidth: 30, halign: 'center' }, 
+                2: { cellWidth: 'auto' } 
+            },
+            // Colorear filas según estado
+            didParseCell: function(data) {
+                if (data.section === 'body' && data.column.index === 1) {
+                    if (data.cell.raw === 'CRÍTICO') {
+                        data.cell.styles.textColor = [231, 76, 60]; // Rojo
+                        data.cell.styles.fontStyle = 'bold';
+                    } else if (data.cell.raw === 'SEGUIMIENTO') {
+                        data.cell.styles.textColor = [243, 156, 18]; // Naranja
+                    }
+                }
+            }
+        });
+
+        // 5. GRÁFICA RADAR
+        const canvasRadar = document.getElementById('chartR');
+        if (canvasRadar) {
+            try {
+                // Capturar canvas como imagen PNG
+                const imgData = canvasRadar.toDataURL("image/png", 1.0);
+                let yRad = doc.lastAutoTable.finalY + 10;
+                
+                // Control de salto de página para la gráfica
+                if (yRad > 185) { doc.addPage(); yRad = 45; }
+                
+                doc.setFont(undefined, 'bold').setFontSize(10).text("PERFIL SOCIO-COGNITIVO (RADAR)", 105, yRad, { align: 'center' });
+                // Insertar imagen (centrada)
+                doc.addImage(imgData, 'PNG', 55, yRad + 5, 100, 80);
+                doc.lastAutoTable.finalY = yRad + 90; // Actualizar posición final
+            } catch (e) { console.warn("Error capturando radar para PDF:", e); }
+        }
+
+        // 6. BITÁCORA
+        doc.autoTable({
+            startY: doc.lastAutoTable.finalY + 5,
+            theme: 'plain',
+            head: [[{ content: 'REGISTROS DE BITÁCORA / SEGUIMIENTO RECIENTE', styles: { fontStyle: 'bold', fillColor: [240, 240, 240], textColor: [0,0,0] } }]],
+            body: [[bitacoraTexto || "Sin registros adicionales en bitácora."]],
+            styles: { fontSize: 7, cellPadding: 5 }
+        });
+
+        // 7. FIRMAS
+        let yFirmas = doc.lastAutoTable.finalY + 25;
+        // Control de salto de página para firmas
+        if (yFirmas > 265) { doc.addPage(); yFirmas = 50; }
+        
+        doc.setDrawColor(0).line(30, yFirmas, 85, yFirmas);
+        doc.setFontSize(8).setFont(undefined, 'bold').text("ORIENTACIÓN ESCOLAR", 57, yFirmas + 5, { align: 'center' });
+        
+        doc.line(125, yFirmas, 180, yFirmas);
+        doc.text("RECTORÍA / COORDINACIÓN", 152, yFirmas + 5, { align: 'center' });
+
+        // 8. HEADER Y ESCUDO (Repetitivo en todas las páginas, se dibuja al final)
+        const totalPaginas = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= totalPaginas; i++) {
+            doc.setPage(i);
+            
+            // --- CORRECCIÓN DEFINITIVA DEL ESCUDO ---
+            if (window.sedeActual && window.sedeActual.logo) {
+                try {
+                    // Usamos la función auxiliar para asegurar el prefijo data:image
+                    const logoFinal = normalizarBase64Image(window.sedeActual.logo);
+                    doc.addImage(logoFinal, 'PNG', 15, 10, 22, 22);
+                } catch (e) { 
+                    console.error("No se pudo cargar el escudo en el PDF. Verifique el formato Base64.", e); 
+                }
+            }
+
+            // Textos del encabezado
+            doc.setTextColor(40).setFontSize(11).setFont(undefined, 'bold').text(nombreInst.toUpperCase(), 40, 18);
+            doc.setFontSize(8).setFont(undefined, 'normal').text(daneTexto, 40, 23);
+            doc.setFontSize(9).text("FICHA INTEGRAL DE SEGUIMIENTO (NEE)", 40, 28);
+            
+            // Línea divisoria
+            doc.setDrawColor(200).line(15, 34, 195, 34);
+            
+            // Pie de página (Paginación)
+            doc.setFontSize(7).setTextColor(100).text(`Generado automáticamente el: ${new Date().toLocaleString()} - Página ${i} de ${totalPaginas}`, 105, 288, { align: 'center' });
+        }
+
+        // 9. GUARDAR ARCHIVO
+        doc.save(`Ficha_NEE_${nombreEst.replace(/\s+/g, '_')}.pdf`);
+
+    } catch (err) {
+        console.error("Error crítico generando PDF:", err);
+        alert("Ocurrío un error al generar el PDF: " + err.message);
+    }
+}
+
+
+// Función para re-abrir el formulario con los datos actuales del alumno
+// Función para el botón del Perfil
+function reHacerTest() {
+    try {
+        if (!currentE || !currentE.documento) {
+            alert("No se pudo identificar al estudiante para repetir el test.");
+            return;
+        }
+
+        // --- MEJORA: Destruir la instancia de la gráfica actual si existe ---
+        // Asumiendo que guardas la instancia en window.myRadar o similar
+        if (window.chartR && typeof window.chartR.destroy === 'function') {
+            window.chartR.destroy();
+        }
+        
+        // También es buena idea limpiar el canvas físicamente
+        const canvas = document.getElementById('chartR');
+        if (canvas) {
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        openM(currentE.documento); 
+        
+    } catch (error) {
+        alert("Error al intentar reabrir el test: " + error.message);
+    }
+}
+
+
+// Función Principal para abrir el Modal (Nuevo y Editar)
+
+function openM(doc = null) {
+    try {
+        const modal = document.getElementById('modal');
+        if (!modal) return;
+        
+        modal.style.display = 'block';
+        currentStep = 1;
+        if (typeof resetTest === 'function') resetTest();
+
+        // Limpieza total de campos
+        const campos = ['eId', 'mNom', 'mDoc', 'mEda', 'mGra', 'mSec'];
+        campos.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = "";
+        });
+        document.querySelectorAll('.ind').forEach(cb => cb.checked = false);
+
+        // CARGA DE DATOS (Si doc no es nulo)
+        if (doc) {
+            // Buscamos al alumno en la base de datos local (db)
+            const encontrado = db.find(x => x.documento == doc);
+            
+            if (encontrado) {
+                // Usamos el nombre de la variable 'encontrado' para todo
+                document.getElementById('eId').value = encontrado.id || "";
+                document.getElementById('mNom').value = encontrado.nombre || "";
+                document.getElementById('mDoc').value = encontrado.documento || "";
+                document.getElementById('mEda').value = encontrado.edad || "";
+                document.getElementById('mGra').value = encontrado.grado || "";
+                document.getElementById('mSec').value = encontrado.seccion || "";
+            } else {
+                console.warn("No se encontró el documento " + doc + " en la lista local.");
+            }
+        }
+    } catch (err) {
+        alert("Error en openM: " + err.message);
+    }
+}
+
+function drawCharts(counts, dimImpact) {
+    // 1. Verificación de datos
+    const tieneDatos = Object.values(dimImpact).some(v => v > 0) || 
+                      Object.values(counts).some(v => v > 0);
+
+    if (!tieneDatos) {
+        console.warn("📉 No hay datos suficientes para renderizar gráficas.");
+        return;
+    }
+
+    // 2. Obtener contextos usando los IDs REALES de tu HTML (chartB y chartP)
+    const canvasBar = document.getElementById('chartB'); 
+    const canvasPie = document.getElementById('chartP'); 
+
+    if (!canvasBar || !canvasPie) {
+        console.error("⚠️ Error: No se encontraron chartB o chartP en el DOM.");
+        return;
+    }
+
+    const ctxBar = canvasBar.getContext('2d');
+    const ctxPie = canvasPie.getContext('2d');
+
+    // 3. Limpieza profunda de instancias previas
+    if (window.myBarChart instanceof Chart) window.myBarChart.destroy();
+    if (window.myPieChart instanceof Chart) window.myPieChart.destroy();
+
+    // 4. Configuración común
+    const commonOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 800 }
+    };
+
+    // 5. Gráfica de Barras (Impacto por Dimensión)
+    window.myBarChart = new Chart(ctxBar, {
+        type: 'bar',
+        data: {
+            labels: Object.keys(dimImpact),
+            datasets: [{
+                label: 'Puntaje Acumulado',
+                data: Object.values(dimImpact),
+                backgroundColor: ['#3498db', '#9b59b6', '#f1c40f', '#e67e22'],
+                borderRadius: 8
+            }]
+        },
+        options: {
+            ...commonOptions,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(0, 0, 0, 0.1)' }, // Ajustado para fondo claro si es necesario
+                    ticks: { precision: 0 }
+                },
+                x: { grid: { display: false } }
+            },
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+
+    // 6. Gráfica de Dona (Distribución de Riesgo)
+    window.myPieChart = new Chart(ctxPie, {
+        type: 'doughnut',
+        data: {
+            labels: Object.keys(counts),
+            datasets: [{
+                data: Object.values(counts),
+                backgroundColor: ['#e74c3c', '#f39c12', '#2ecc71'],
+                borderWidth: 2,
+                borderColor: '#ffffff'
+            }]
+        },
+        options: {
+            ...commonOptions,
+            cutout: '70%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { padding: 20, font: { size: 12 } }
+                }
+            }
+        }
+    });
+
+    // 7. Forzar renderizado correcto
+    setTimeout(() => {
+        window.myBarChart.resize();
+        window.myPieChart.resize();
+    }, 10);
+}
+
+
+
+function changeStep(n) {
+    const steps = document.querySelectorAll('.test-step');
+    const totalSteps = steps.length;
+
+    // 1. Validar que el movimiento sea posible antes de ejecutar
+    if (currentStep + n < 1 || currentStep + n > totalSteps) return;
+
+    // 2. Ocultar el paso actual (usando la clase 'active' de tu CSS)
+    steps[currentStep - 1].classList.remove('active');
+    
+    // 3. Actualizar el paso actual
+    currentStep += n;
+
+    // 4. Mostrar el nuevo paso
+    steps[currentStep - 1].classList.add('active');
+
+    // 5. Control de botones (Anterior / Siguiente / Guardar)
+    // Botón Anterior: se deshabilita en el paso 1
+    document.getElementById('btnPrev').disabled = (currentStep === 1);
+    
+    // Botones Siguiente vs Guardar: el intercambio ocurre en el último paso (5)
+    const btnNext = document.getElementById('btnNext');
+    const btnSave = document.getElementById('btnSave');
+
+    if (currentStep === totalSteps) {
+        btnNext.style.display = 'none';
+        btnSave.style.display = 'inline-flex'; // Usamos inline-flex por tu estilo de botones
+    } else {
+        btnNext.style.display = 'inline-flex';
+        btnSave.style.display = 'none';
+    }
+
+    // 6. Actualizar Barra de Progreso
+    const progressPercent = (currentStep / totalSteps) * 100;
+    const progressFill = document.getElementById('pFill');
+    if (progressFill) {
+        progressFill.style.width = progressPercent + '%';
+    }
+}
+
+// Resetear el test al cerrar/abrir
+function resetTest() {
+    const steps = document.querySelectorAll('.test-step');
+    if (steps.length === 0) return;
+    
+    steps.forEach(s => s.classList.remove('active'));
+    steps[0].classList.add('active');
+    
+    // Reiniciar visibilidad de botones
+    const btnNext = document.getElementById('btnNext');
+    const btnSave = document.getElementById('btnSave');
+    const btnPrev = document.getElementById('btnPrev');
+    const pFill = document.getElementById('pFill');
+
+    if (btnNext) btnNext.style.display = 'block';
+    if (btnSave) btnSave.style.display = 'none';
+    if (btnPrev) btnPrev.disabled = true;
+    if (pFill) pFill.style.width = '25%';
+}
+
+function openQuickEdit(doc) {
+    // Usamos == para permitir comparación de string vs number si fuera el caso
+    const estudiante = db.find(x => x.documento == doc);
+    
+    if (!estudiante) {
+        console.error("❌ Estudiante no encontrado:", doc);
+        return;
+    }
+
+    // 1. Llenar campos de texto básicos
+    const fields = {
+        'editId': estudiante.id,
+        'editNom': estudiante.nombre,
+        'editDoc': estudiante.documento,
+        'editEda': estudiante.edad || ""
+    };
+
+    for (let id in fields) {
+        const el = document.getElementById(id);
+        if (el) el.value = fields[id];
+    }
+
+    // 2. --- LÓGICA DE GRADO NORMALIZADA ---
+    const selectGra = document.getElementById('editGra');
+    if (selectGra) {
+        // Intentamos asignación directa primero
+        selectGra.value = estudiante.grado;
+
+        // Si falló (value sigue vacío o no coincide), normalizamos y buscamos
+        if (!selectGra.value || selectGra.selectedIndex === -1) {
+            // Limpiamos el grado de la DB (quitamos ° y espacios)
+            const gradoDB = String(estudiante.grado).replace('°', '').trim();
+            
+            for (let i = 0; i < selectGra.options.length; i++) {
+                const optVal = String(selectGra.options[i].value).replace('°', '').trim();
+                
+                if (optVal === gradoDB && gradoDB !== "") {
+                    selectGra.selectedIndex = i;
+                    break;
+                }
+            }
+        }
+    }
+
+    // 3. --- LÓGICA DE SECCIÓN ---
+    const selectSec = document.getElementById('editSec');
+    if (selectSec) {
+        selectSec.value = estudiante.seccion;
+        // Si no coincide, podrías aplicar la misma lógica de limpieza que con el grado
+    }
+
+    // 4. Mostrar el modal (Asegúrate de que el ID coincida con tu CSS de modales)
+    const modal = document.getElementById('modalEdit');
+    if (modal) {
+        modal.style.display = 'flex'; // Usamos flex para centrar según tus estilos previos
+    }
+}
+
+
+async function saveQuickEdit() {
+    // 1. Capturamos los valores
+    const id = document.getElementById('editId').value;
+    const nombre = document.getElementById('editNom').value.trim();
+    const documento = document.getElementById('editDoc').value.trim();
+    const edad = document.getElementById('editEda').value;
+    const grado = document.getElementById('editGra').value;
+    const seccion = document.getElementById('editSec')?.value || "";
+
+    // 2. Validaciones básicas antes de enviar
+    if (!id) {
+        alert("❌ Error: No se encontró el ID del estudiante.");
+        return;
+    }
+    if (!nombre || !documento) {
+        alert("⚠️ El nombre y el documento son obligatorios.");
+        return;
+    }
+
+    // 3. Armamos el objeto con conversión de tipos
+    const cambios = {
+        nombre: nombre,
+        documento: documento,
+        // Convertimos edad a número, si está vacío enviamos null
+        edad: edad ? parseInt(edad) : null, 
+        grado: grado,
+        seccion: seccion
+    };
+
+    console.log("Datos listos para enviar:", cambios);
+
+    // 4. Llamamos a la función de Supabase que creamos antes
+    await actualizarEstudiante(id, cambios);
+}
+
+async function actualizarEstudiante(id, nuevosDatos) {
+    try {
+        console.log("Enviando actualización a Supabase para ID:", id);
+
+        const { data, error } = await _sb
+            .from('estudiantes')
+            .update(nuevosDatos)
+            .eq('id', id)
+            .select(); // <--- Sugerencia: Retorna el registro actualizado
+
+        if (error) throw error;
+
+        alert("✅ Estudiante actualizado con éxito.");
+
+        // 4. Cerramos el modal
+        // Usamos la misma lógica que en showS pero a la inversa
+        const modal = document.getElementById('modalEdit');
+        if (modal) {
+            modal.style.display = 'none';
+        } else {
+            // Si usas el sistema de secciones, volvemos a la principal
+            if (typeof showS === 'function') showS('mainSection');
+        }
+
+        // 5. REFRESCAR: 
+        // Es vital que esto sea un await para que no intente renderizar 
+        // antes de que los datos terminen de bajar
+        await load();
+
+    } catch (err) {
+        console.error("❌ Error al actualizar:", err.message);
+        alert("Hubo un problema al guardar los cambios: " + err.message);
+    }
+}
+
+
+async function updateBasics() {
+    const id = document.getElementById('editId').value;
+    const payload = {
+        nombre: document.getElementById('editNom').value.toUpperCase(),
+        documento: document.getElementById('editDoc').value,
+        edad: parseInt(document.getElementById('editEda').value),
+        grado: document.getElementById('editGra').value,
+        seccion: document.getElementById('editSec').value
+    };
+
+    try {
+        const { error } = await _sb.from('estudiantes').update(payload).eq('id', id);
+        if (error) throw error;
+
+        alert("Datos actualizados correctamente.");
+        document.getElementById('modalEdit').style.display = 'none';
+        load(); // Recarga la tabla
+    } catch (err) {
+        alert("Error al actualizar: " + err.message);
+    }
+}
+
+async function getInstitutionData(codigoSede) {
+    const { data, error } = await _sb
+        .from('instituciones')
+        .select('nombre, codigo, logo')
+        .eq('codigo', codigoSede)
+        .single();
+
+    if (error) {
+        console.error("Error al obtener datos de la institución:", error);
+        return null;
+    }
+    return data;
+}
+
+function getBase64ImageFromURL(url) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.setAttribute("crossOrigin", "anonymous");
+        img.onload = () => {
+            const canvas = document.createElement("canvas");
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0);
+            resolve(canvas.toDataURL("image/png"));
+        };
+        img.onerror = (error) => reject(error);
+        img.src = url;
+    });
+}
+
+// ================================================================
+// GESTIÓN DE LIBRERÍA DE SUGERENCIAS (UNIFICADO)
+// ================================================================
+
+// 1. CARGAR DATOS DESDE SUPABASE
+
+
+// 2. DIBUJAR LA TABLA EN EL HTML
+function listarSugerencias() {
+    const tbody = document.getElementById('listaSugerencias');
+    if (!tbody) return;
+
+    // 1. Limpieza radical
+    tbody.innerHTML = ""; 
+
+    // 2. Obtener datos
+    const datos = window.libreriaSugerencias || [];
+    console.log("🎨 Intentando dibujar filas para:", datos.length, "ítems");
+
+    if (datos.length === 0) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td colspan="4" style="text-align:center; padding:20px; color:black;">No hay datos cargados en memoria.</td>`;
+        tbody.appendChild(tr);
+        return;
+    }
+
+    // 3. Construcción manual de filas (Más segura para el DOM)
+    datos.forEach(s => {
+        const tr = document.createElement('tr');
+        tr.style.display = "table-row";
+        
+        // Limpieza de datos
+        const d = s.dimension || "N/A";
+        const e = s.estado || "BAJO";
+        let t = s.sugerencia || "Sin texto";
+        t = t.replace(/^'|'$/g, ""); // Quitar comillas simples
+
+        tr.innerHTML = `
+            <td style="color: black !important; font-weight: bold;">${d}</td>
+            <td>
+                <span class="badge" style="background:${getColorRiesgo(e)}; color:white; padding:4px 10px; border-radius:15px;">
+                    ${e}
+                </span>
+            </td>
+            <td style="color: #333 !important; font-size: 13px;">${t}</td>
+            <td style="text-align: center;">
+                <button onclick="borrarSugerencia('${s.id}')" style="cursor:pointer; border:none; background:none; font-size:1.2rem;">🗑️</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    console.log("✅ Renderizado manual completado.");
+}
+
+
+// Asegúrate de tener esta función para que no de error de "not defined"
+function getColorRiesgo(riesgo) {
+    const r = String(riesgo).toUpperCase();
+    if (r.includes('ALTO') || r.includes('CRÍTI')) return '#e74c3c';
+    if (r.includes('MEDIO') || r.includes('SEGUI')) return '#f39c12';
+    return '#27ae60';
+}
+
+
+// Función auxiliar para los colores (Asegúrate de tenerla)
+function getColorRiesgo(riesgo) {
+    const r = String(riesgo).toUpperCase();
+    if (r.includes('ALTO') || r.includes('CRÍTICO')) return '#e74c3c'; // Rojo
+    if (r.includes('MEDIO') || r.includes('SEGUIMIENTO')) return '#f39c12'; // Naranja
+    return '#27ae60'; // Verde para Bajo/Normal
+}
+
+
+// 3. GUARDAR NUEVA SUGERENCIA
+async function guardarSugerencia(event) {
+    if(event) event.preventDefault(); // Evita recarga de página
+
+    const btn = document.getElementById('btnSaveSug');
+    const dim = document.getElementById('sugDim').value;
+    const est = document.getElementById('sugEst').value;
+    const txt = document.getElementById('sugTexto').value;
+
+    if (!txt) {
+        alert("Escribe una sugerencia");
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerText = "⏳...";
+
+    try {
+        const { error } = await _sb
+            .from('libreria_sugerencias')
+            .insert([{ 
+                dimension: dim, 
+                estado: est, 
+                sugerencia: txt 
+            }]);
+
+        if (error) throw error;
+
+        document.getElementById('sugTexto').value = ""; // Limpiar campo
+        await cargarLibreriaSugerencias(); // Recargar tabla
+        alert("✅ Sugerencia guardada correctamente");
+
+    } catch (err) {
+        alert("Error al guardar: " + err.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "➕ GUARDAR";
+    }
+}
+
+
+// 4. ELIMINAR SUGERENCIA
+async function borrarSugerencia(id) {
+    if (!confirm("¿Estás seguro de eliminar esta recomendación?")) return;
+
+    try {
+        const { error } = await _sb.from('libreria_sugerencias').delete().eq('id', id);
+        if (error) throw error;
+        
+        console.log("🗑️ Sugerencia eliminada ID:", id);
+        await cargarLibreriaSugerencias(); 
+    } catch (err) {
+        alert("Error al eliminar: " + err.message);
+    }
+}
+
+// 5. AUXILIARES: COLORES Y ESTADOS
+function getColorRiesgo(est) {
+    const e = String(est).toUpperCase();
+    if (e.includes('ALTO') || e.includes('CRÍTICO')) return '#e74c3c'; // Rojo
+    if (e.includes('MEDIO') || e.includes('SEGUIMIENTO')) return '#f39c12'; // Naranja
+    return '#27ae60'; // Verde
+}
+
+// 6. INICIALIZACIÓN DE LA APP
+document.addEventListener('DOMContentLoaded', () => {
+    // Ocultar todas las vistas al cargar
+    document.querySelectorAll('.seccion-vista').forEach(s => {
+        s.style.display = 'none';
+        s.classList.remove('activa');
+    });
+    
+    // Mostrar login por defecto
+    const login = document.getElementById('loginSection');
+    if(login) {
+        login.style.display = 'block';
+        login.classList.add('activa');
+    }
+});
+
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Forzamos que todo se oculte y solo se vea el login
+    document.querySelectorAll('.seccion-vista').forEach(s => s.style.display = 'none');
+    
+    const login = document.getElementById('loginSection');
+    if(login) {
+        login.style.display = 'block';
+        login.classList.add('activa');
+    }
+});
+
+window.onclick = function(event) {
+    const modalEval = document.getElementById('modal');
+    const modalEdit = document.getElementById('modalEdit');
+    if (event.target == modalEval) closeM();
+    if (event.target == modalEdit) modalEdit.style.display = "none";
+}
+
+function navegar(idDestino) {
+    console.log("📍 Navegando a:", idDestino);
+
+    const loginSec = document.getElementById('loginSection');
+    const mainSec = document.getElementById('mainSection');
+    const destino = document.getElementById(idDestino);
+
+    if (!destino) {
+        console.error("❌ Error: ID no encontrado:", idDestino);
+        return;
+    }
+
+    // 1. Manejo de Contenedores Principales (Login vs App)
+    // CORRECCIÓN: 'perfil' debe coincidir con el ID del HTML
+    const subvistasApp = ['dash', 'list', 'vistaSugerencias', 'perfil']; 
+    
+    if (subvistasApp.includes(idDestino)) {
+        if (loginSec) loginSec.style.display = 'none';
+        if (mainSec) mainSec.style.display = 'block'; // Cambiado de flex a block para evitar errores de layout
+    } else if (idDestino === 'loginSection') {
+        if (mainSec) mainSec.style.display = 'none';
+        if (loginSec) loginSec.style.display = 'block';
+    }
+
+    // 2. Ocultar todas las sub-vistas internas (.seccion-vista)
+    document.querySelectorAll('.seccion-vista').forEach(v => {
+        v.style.display = 'none';
+        v.classList.remove('activa');
+    });
+
+    // 3. Activar la vista destino
+    destino.style.display = 'block';
+    destino.classList.add('activa');
+
+    // 4. Feedback Visual: Botón Activo en el Nav
+    document.querySelectorAll('.nav-link').forEach(btn => {
+        btn.style.opacity = "0.6"; // Opaco los no seleccionados
+        btn.style.borderBottom = "none";
+    });
+    const btnActivo = document.getElementById('btn-' + idDestino);
+    if (btnActivo) {
+        btnActivo.style.opacity = "1"; // Resalto el activo
+        btnActivo.style.borderBottom = "3px solid white";
+    }
+
+    // 5. Lógica específica para el Dashboard (Gráficas)
+    if (idDestino === 'dash') {
+        setTimeout(() => {
+            const barCanvas = document.getElementById('chartB'); 
+            const pieCanvas = document.getElementById('chartP');
+
+            if (barCanvas && pieCanvas) {
+                if (typeof render === 'function') {
+                    console.log("📊 Renderizando gráficas del Dashboard...");
+                    render(); 
+                }
+            }
+        }, 200); 
+    }
+
+    // 6. Carga de sugerencias (Asegúrate que el nombre de la función coincida)
+    if (idDestino === 'vistaSugerencias') {
+        if (typeof cargarLibreriaSugerencias === 'function') {
+            cargarLibreriaSugerencias();
+        } else if (typeof cargarSugerencias === 'function') {
+            cargarSugerencias();
+        }
+    }
+}
+
+/**
+ * Asegura que un string Base64 tenga el prefijo correcto para ser usado como imagen (src o jsPDF).
+ * @param {string} base64String - El string base64 crudo o con prefijo.
+ * @returns {string} El string base64 listo para usar (data:image/png;base64,...).
+ */
+function normalizarBase64Image(base64String) {
+    if (!base64String) return "";
+    
+    // Si ya tiene el prefijo data:image, lo devolvemos tal cual
+    if (base64String.startsWith('data:image')) {
+        return base64String;
+    }
+    
+    // Si es un Base64 puro, asumimos PNG (común en firmas/logos) y añadimos el prefijo
+    // Si sabes que es JPG, cambia 'image/png' por 'image/jpeg'
+    return `data:image/png;base64,${base64String}`;
+}
+
+// Actualiza todas las imágenes con clase .imgEscudo en el HTML
+function actualizarEscudosEnPantalla(logoRaw) {
+    if (!logoRaw) return;
+    
+    // Normalizamos el base64
+    const logoFinal = normalizarBase64Image(logoRaw);
+    
+    // Buscamos todas las etiquetas <img> que deban llevar el escudo
+    const escudos = document.querySelectorAll('.imgEscudo');
+    escudos.forEach(img => {
+        img.src = logoFinal;
+        img.style.display = 'block'; // Lo hacemos visible si estaba oculto
+    });
+    
+    console.log("🛡️ Escudos actualizados en la interfaz.");
+}
+
+// Asegura el prefijo data:image/png;base64,
+function normalizarBase64Image(base64String) {
+    if (!base64String) return "";
+    if (base64String.startsWith('data:image')) return base64String;
+    // Si no tiene prefijo, se lo ponemos (asumiendo PNG por defecto)
+    return `data:image/png;base64,${base64String}`;
+}
+
+async function generarActaCompromiso() {
+    const est = window.currentE;
+    if (!est) return alert("Error: No se ha seleccionado un estudiante.");
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('p', 'mm', 'a4');
+    const sede = window.sedeActual || {};
+
+    // --- 1. ENCABEZADO CON LOGO Y DANE ---
+    if (sede.logo) {
+        try {
+            const logoImg = normalizarBase64Image(sede.logo);
+            doc.addImage(logoImg, 'PNG', 15, 10, 22, 22);
+        } catch (e) { console.warn("Logo no cargado en PDF"); }
+    }
+
+    // Nombre de la Institución
+    doc.setFontSize(14).setFont(undefined, 'bold');
+    doc.text((sede.nombre || "INSTITUCIÓN EDUCATIVA").toUpperCase(), 42, 16);
+    
+    // CÓDIGO DANE (Nueva línea añadida)
+    doc.setFontSize(9).setFont(undefined, 'normal');
+    doc.text(`CÓDIGO DANE: ${sede.codigo || 'N/A'}`, 42, 21);
+    
+    doc.setFontSize(10).setFont(undefined, 'bold');
+    doc.text("ACTA DE COMPROMISO Y CORRESPONSABILIDAD - PROCESO NEE", 42, 27);
+    
+    // Línea divisoria
+    doc.setLineWidth(0.5);
+    doc.line(15, 35, 195, 35);
+
+    // --- 2. DATOS BÁSICOS DEL ESTUDIANTE ---
+    doc.setFontSize(10).setFont(undefined, 'bold').text("DATOS DEL ESTUDIANTE:", 15, 45);
+    doc.setFont(undefined, 'normal');
+    doc.text(`Nombre Completo: ${est.nombre.toUpperCase()}`, 15, 51);
+    doc.text(`Documento de Identidad: ${est.documento}`, 15, 56);
+    doc.text(`Grado y Sección: ${est.grado}°${est.seccion}   |   Sede: ${sede.nombre || 'Principal'}`, 15, 61);
+    doc.text(`Fecha de Registro: ${new Date().toLocaleDateString()}`, 15, 66);
+
+    // --- 3. DIAGNÓSTICO DE ALERTAS (DINÁMICO) ---
+    let y = 75;
+    doc.setFont(undefined, 'bold').text("1. HALLAZGOS Y DIMENSIONES EN ALERTA:", 15, y);
+    
+    const puntajes = est.puntajes || {};
+    const dimensionesCriticas = [];
+    for (let dim in puntajes) {
+        if (parseFloat(puntajes[dim]) >= 7) {
+            dimensionesCriticas.push(dim.toUpperCase());
+        }
+    }
+
+    if (dimensionesCriticas.length > 0) {
+        doc.setFont(undefined, 'normal');
+        const intro = "Se informa al acudiente que, tras la valoración pedagógica, el estudiante presenta niveles de riesgo CRÍTICO en las áreas resaltadas a continuación:";
+        const linesIntro = doc.splitTextToSize(intro, 175);
+        doc.text(linesIntro, 15, y + 6);
+        
+        y += (linesIntro.length * 5) + 8;
+        
+        // Resaltado de Dimensiones en Rojo
+        doc.setFont(undefined, 'bold').setTextColor(200, 0, 0);
+        const listaDims = `• DIMENSIONES: [ ${dimensionesCriticas.join(" / ")} ]`;
+        doc.text(listaDims, 20, y);
+        
+        doc.setTextColor(0, 0, 0).setFont(undefined, 'normal');
+        y += 10;
+    }
+
+    // --- 4. CLÁUSULAS DE COMPROMISO ---
+    doc.setFont(undefined, 'bold').text("2. COMPROMISOS DEL PADRE DE FAMILIA / ACUDIENTE:", 15, y);
+    doc.setFont(undefined, 'normal');
+    
+    const clausulas = [
+        "1. Iniciar el proceso de cita médica con especialistas (Psicología, Neuropsicología o Terapias) en un plazo máximo de 15 días.",
+        "2. Entregar a la institución educativa copia de los resultados, diagnósticos o recomendaciones emitidas por los profesionales de salud.",
+        "3. Asistir puntualmente a las reuniones de seguimiento del Plan Individual de Ajustes Razonables (PIAR).",
+        "4. Garantizar el apoyo académico y emocional en casa siguiendo las pautas docentes."
+    ];
+
+    let offset = y + 7;
+    clausulas.forEach(txt => {
+        const lines = doc.splitTextToSize(txt, 170);
+        doc.text(lines, 20, offset);
+        offset += (lines.length * 5) + 2;
+    });
+
+    // --- 5. FIRMAS ---
+    y = offset + 30;
+    if (y > 260) { doc.addPage(); y = 50; }
+
+    doc.setFontSize(9).setFont(undefined, 'bold');
+    doc.line(25, y, 90, y);
+    doc.text("FIRMA DEL ACUDIENTE", 57.5, y + 5, { align: 'center' });
+    doc.text(`C.C. ___________________`, 57.5, y + 10, { align: 'center' });
+
+    doc.line(120, y, 185, y);
+    doc.text("ORIENTACIÓN / RECTORÍA", 152.5, y + 5, { align: 'center' });
+    doc.text(`SEDE: ${sede.nombre || 'INSTITUCIONAL'}`, 152.5, y + 10, { align: 'center' });
+
+    // --- PIE DE PÁGINA ---
+    doc.setFontSize(7).setTextColor(150);
+    doc.text(`Generado automáticamente por NEE Cloud Pro - Sistema de Caracterización`, 105, 285, { align: 'center' });
+
+    doc.save(`Acta_Compromiso_${est.documento}_DANE_${sede.codigo || '0'}.pdf`);
+}
+
+</script>
+
+<div id="modal" class="modal">
+    <div class="modal-content">
+        <div style="background: var(--p); color: white; padding: 25px; border-radius: 16px 16px 0 0;">
+            <h3 style="margin:0; font-size: 1.5rem;">Evaluación Psicotécnica</h3>
+            <p style="margin:5px 0 0; font-size: 0.85rem; opacity: 0.8;">Protocolo Profesional de Observación</p>
+        </div>
+
+        <div style="padding: 30px;">
+            <div class="progress-bar"><div id="pFill" class="progress-fill"></div></div>
+
+            <div class="test-step active" id="step1">
+                <div class="dim-badge" style="background:#e1f5fe; color:#01579b;">PASO 1: IDENTIFICACIÓN</div>
+                <div style="display:grid; grid-template-columns: 2fr 1fr; gap:15px;">
+                    <input type="hidden" id="eId">
+                    <div style="grid-column: span 2;">
+                        <label>Nombre Completo</label>
+                        <input type="text" id="mNom" placeholder="Ej: Juan Pérez">
+                    </div>
+                    <div>
+                        <label>Documento ID</label>
+                        <input type="text" id="mDoc" placeholder="Número">
+                    </div>
+                    <div>
+                        <label>Edad</label>
+                        <input type="number" id="mEda" placeholder="Años">
+                    </div>
+                    <div>
+                        <label>Grado</label>
+                        <select id="mGra">
+                            <option value="">Seleccione...</option>
+                            <option value="Preescolar">Preescolar</option>
+                            <option value="1°">1° Primero</option>
+                            <option value="2°">2° Segundo</option>
+                            <option value="3°">3° Tercero</option>
+                            <option value="4°">4° Cuarto</option>
+                            <option value="5°">5° Quinto</option>
+                            <option value="6°">6° Sexto</option>
+                            <option value="7°">7° Séptimo</option>
+                            <option value="8°">8° Octavo</option>
+                            <option value="9°">9° Noveno</option>
+                            <option value="10°">10° Décimo</option>
+                            <option value="11°">11° Once</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Sección</label>
+                        <select id="mSec">
+                            <option value="">...</option>
+                            <option value="A">A</option>
+                            <option value="B">B</option>
+                            <option value="C">C</option>
+                            <option value="D">D</option>
+                            <option value="F">F</option>
+                            <option value="G">G</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="test-step" id="step2">
+                <div class="dim-badge" style="background:#fce4ec; color:#c2185b;">Dimensión Cognitiva</div>
+                <div class="test-section" data-dim="Cognitiva">
+                    <label class="check-card"><input type="checkbox" class="ind" value="2.5"><span>Dificultad para seguir instrucciones.</span></label>
+                    <label class="check-card"><input type="checkbox" class="ind" value="2.5"><span>Memoria a corto plazo limitada.</span></label>
+                    <label class="check-card"><input type="checkbox" class="ind" value="2.5"><span>Atención menor a 5 minutos.</span></label>
+                    <label class="check-card"><input type="checkbox" class="ind" value="2.5"><span>No reconoce patrones básicos.</span></label>
+                </div>
+            </div>
+
+            <div class="test-step" id="step3">
+                <div class="dim-badge" style="background:#fff3e0; color:#e65100;">Dimensión Comunicativa</div>
+                <div class="test-section" data-dim="Lenguaje">
+                    <label class="check-card"><input type="checkbox" class="ind" value="2.5"><span>Frases incompletas o nulas.</span></label>
+                    <label class="check-card"><input type="checkbox" class="ind" value="2.5"><span>Sustitución de sonidos al hablar.</span></label>
+                    <label class="check-card"><input type="checkbox" class="ind" value="2.5"><span>No responde a su propio nombre.</span></label>
+                    <label class="check-card"><input type="checkbox" class="ind" value="2.5"><span>Uso de gestos en lugar de palabras.</span></label>
+                </div>
+            </div>
+
+            <div class="test-step" id="step4">
+                <div class="dim-badge" style="background:#e8f5e9; color:#1b5e20;">DIMENSIÓN SOCIO-AFECTIVA</div>
+                <div class="test-section" data-dim="Social">
+                    <label class="check-card"><input type="checkbox" class="ind" value="2.5"><span>Conductas disruptivas o llanto.</span></label>
+                    <label class="check-card"><input type="checkbox" class="ind" value="2.5"><span>Evita el contacto visual prolongado.</span></label>
+                    <label class="check-card"><input type="checkbox" class="ind" value="2.5"><span>No participa en juegos grupales.</span></label>
+                    <label class="check-card"><input type="checkbox" class="ind" value="2.5"><span>Reacciones extremas a cambios de rutina.</span></label>
+                </div>
+            </div>
+
+            <div class="test-step" id="step5">
+                <div class="dim-badge" style="background:#f3e5f5; color:#7b1fa2;">DIMENSIÓN MOTRIZ</div>
+                <div class="test-section" data-dim="Motriz">
+                    <label class="check-card"><input type="checkbox" class="ind" value="2.5"><span>Dificultad con la pinza fina (lápiz).</span></label>
+                    <label class="check-card"><input type="checkbox" class="ind" value="2.5"><span>Falta de coordinación motora general.</span></label>
+                    <label class="check-card"><input type="checkbox" class="ind" value="2.5"><span>Tropiezos frecuentes o falta de equilibrio.</span></label>
+                    <label class="check-card"><input type="checkbox" class="ind" value="2.5"><span>Problemas de coordinación ojo-mano.</span></label>
+                </div>
+            </div>
+
+            <div style="display:flex; justify-content: space-between; margin-top: 30px;">
+                <button class="btn" style="background:#95a5a6; color:white;" id="btnPrev" onclick="changeStep(-1)" disabled>Anterior</button>
+                <button class="btn" style="background:var(--a);" id="btnNext" onclick="changeStep(1)">Siguiente</button>
+                <button class="btn" style="background:var(--s); display:none;" id="btnSave" onclick="save()">Finalizar y Guardar</button>                
+            </div>
+            <button class="btn" style="background:none; color:var(--g); width:100%; margin-top:10px; font-size:0.8rem;" onclick="closeM()">Cancelar Evaluación</button>
+        </div>
+    </div>
+</div>
+
+
+<div id="mainSection">
+   <div class="nav">...</div>
+   
+   <div id="dash" class="seccion-vista">...</div>
+   <div id="list" class="seccion-vista">...</div>
+   <div id="vistaSugerencias" class="seccion-vista">...</div>
+</div>
+
+<div id="modalEdit" class="modal" style="display:none; position:fixed; z-index:3000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.8); backdrop-filter: blur(3px);">
+    <div class="modal-content" style="background:white; margin:10% auto; padding:25px; width:90%; max-width:500px; border-radius:15px;">
+        <h3 style="color:var(--p); margin-top:0;">Actualizar Datos Básicos</h3>
+        <hr>
+        <input type="hidden" id="editId">
+        
+        <div style="margin-bottom:15px;">
+            <label>Nombre Completo</label>
+            <input type="text" id="editNom" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ccc;">
+        </div>
+        
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:15px;">
+            <div>
+                <label>Documento ID</label>
+                <input type="text" id="editDoc" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ccc;">
+            </div>
+            <div>
+                <label>Edad</label>
+                <input type="number" id="editEda" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ccc;">
+            </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:20px;">
+            <div>
+                <label>Grado</label>
+                <select id="editGra" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ccc;">
+                    <option value="">Seleccione...</option>
+                    <option value="Preescolar">Preescolar</option>
+                    <option value="1°">1° Primero</option>
+                    <option value="2°">2° Segundo</option>
+                    <option value="3°">3° Tercero</option>
+                    <option value="4°">4° Cuarto</option>
+                    <option value="5°">5° Quinto</option>
+                    <option value="6°">6° Sexto</option>
+                    <option value="7°">7° Séptimo</option>
+                    <option value="8°">8° Octavo</option>
+                    <option value="9°">9° Noveno</option>
+                    <option value="10°">10° Décimo</option>
+                    <option value="11°">11° Once</option>
+                </select>
+            </div>
+            <div>
+                <label>Sección</label>
+                <select id="editSec" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ccc;">
+                    <option value="A">A</option>
+                    <option value="B">B</option>
+                    <option value="C">C</option>
+                </select>
+            </div>
+        </div>
+
+        <button class="btn" style="background:var(--s); width:100%; padding:12px; justify-content:center;" onclick="updateBasics()">GUARDAR CAMBIOS</button>
+        <button class="btn" style="background:var(--g); width:100%; margin-top:10px; color:#333; justify-content:center;" onclick="document.getElementById('modalEdit').style.display='none'">CANCELAR</button>
+    </div>
+</div>
+</body>
+</html>
